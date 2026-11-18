@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Acesso administrativo — Credenciamento</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body class="admin login-body">
+  <div class="fundo" aria-hidden="true"><i class="aro c6"></i><i class="aro c7"></i><i class="disco c1"></i><i class="disco c2"></i><i class="disco c3"></i><i class="disco c4"></i></div>
+  <div class="login-pagina">
+    <main class="login-cartao">
+      <img src="../assets/logo-forum.png" alt="2º Fórum Baiano de Compras Públicas" width="585" height="265">
+      <h1>Acesso administrativo</h1>
+
+      <section id="painel-login" class="formulario-admin">
+        <p id="msg-login" class="msg" role="alert" hidden></p>
+        <form id="form-login" novalidate>
+          <div class="campo"><label for="email">E-mail</label>
+            <input id="email" type="email" autocomplete="username" required></div>
+          <div class="campo"><label for="senha">Senha</label>
+            <input id="senha" type="password" autocomplete="current-password" required></div>
+          <button id="btn-entrar" class="btn" type="submit">Entrar</button>
+          <button id="link-recuperar" class="link-botao" type="button">Esqueci minha senha</button>
+        </form>
+      </section>
+
+      <section id="painel-recuperar" class="formulario-admin" hidden>
+        <p class="nota">Informe o e-mail de acesso para receber o link de redefinição.</p>
+        <p id="msg-recuperar" class="msg" role="status" hidden></p>
+        <form id="form-recuperar" novalidate>
+          <div class="campo"><label for="email-rec">E-mail</label>
+            <input id="email-rec" type="email" autocomplete="username"></div>
+          <button class="btn" type="submit">Enviar link</button>
+          <button id="link-voltar" class="link-botao" type="button">Voltar ao login</button>
+        </form>
+      </section>
+
+      <section id="painel-nova-senha" class="formulario-admin" hidden>
+        <p class="nota">Defina uma nova senha (mínimo de 12 caracteres).</p>
+        <p id="msg-nova" class="msg" role="alert" hidden></p>
+        <form id="form-nova-senha" novalidate>
+          <div class="campo"><label for="nova-senha">Nova senha</label>
+            <input id="nova-senha" type="password" autocomplete="new-password" minlength="12"></div>
+          <div class="campo"><label for="nova-senha2">Repita a nova senha</label>
+            <input id="nova-senha2" type="password" autocomplete="new-password" minlength="12"></div>
+          <button class="btn" type="submit">Salvar nova senha</button>
+        </form>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="../js/auth.js"></script>
+</body>
+</html>

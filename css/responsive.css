@@ -1,0 +1,34 @@
+/* responsive.css — ajustes para tablets, smartphones e telas grandes */
+@media (max-width: 720px) {
+  .cartao { padding: 26px 18px; border-radius: 22px; }
+  .cartao h1 { font-size: 1.7rem; }
+  .campo-cpf { height: 64px; font-size: 1.6rem; }
+  .botao { min-height: 58px; font-size: 1.15rem; }
+  .fundo .c6, .fundo .c7 { opacity: .5; }
+}
+@media (max-height: 640px) and (orientation: landscape) {
+  .publico main { flex-direction: row; flex-wrap: wrap; gap: 16px; }
+  .cabecalho-evento img { width: 300px; }
+}
+@media (min-width: 1200px) {
+  .cartao { width: 620px; }
+  .cabecalho-evento img { width: 520px; }
+}
+
+/* Painel administrativo */
+@media (max-width: 960px) {
+  .topo-admin { flex-wrap: wrap; gap: 8px; }
+  .topo-admin nav { order: 3; width: 100%; overflow-x: auto; }
+  .grade-indicadores { grid-template-columns: repeat(2, 1fr); }
+  .linha-2col { grid-template-columns: 1fr; }
+  .filtros { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .grade-indicadores { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .filtros { grid-template-columns: 1fr; }
+  .conteudo-admin { padding: 12px; }
+  .indicador .valor { font-size: 1.7rem; }
+}
+@media print {
+  .fundo, .topo-admin, .filtros, .acoes-tabela, .paginacao, dialog { display: none !important; }
+}

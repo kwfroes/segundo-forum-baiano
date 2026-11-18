@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Relatórios — Credenciamento 2º Fórum Baiano</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body class="admin">
+  <header id="topo"></header>
+  <main class="conteudo-admin">
+    <h1>Relatórios e exportação</h1>
+    <section class="painel formulario-admin" aria-labelledby="t-rel">
+      <h2 id="t-rel">Gerar relatório</h2>
+      <div class="cfg-linha">
+        <div class="campo"><label for="r-tipo">Relatório</label>
+          <select id="r-tipo">
+            <option value="todos">Todos os inscritos</option>
+            <option value="confirmados">Inscrições confirmadas</option>
+            <option value="presentes">Participantes presentes</option>
+            <option value="ausentes">Participantes ausentes (confirmados sem check-in)</option>
+            <option value="secretaria">Participantes por secretaria</option>
+            <option value="orgao">Participantes por órgão/unidade</option>
+          </select></div>
+        <div class="campo" id="bloco-secretaria" hidden><label for="r-secretaria">Secretaria</label><select id="r-secretaria"></select></div>
+        <div class="campo" id="bloco-orgao" hidden><label for="r-orgao">Órgão/unidade</label><select id="r-orgao"></select></div>
+      </div>
+      <div class="campo"><label><input id="r-cpf" type="checkbox"> Incluir CPF completo (uso restrito; a exportação fica registrada na auditoria)</label></div>
+      <button id="r-gerar" class="btn" type="button">Gerar relatório</button>
+    </section>
+
+    <section id="r-resultado" class="painel" hidden aria-live="polite">
+      <h2 id="r-titulo"></h2>
+      <p id="r-info" class="nota"></p>
+      <p><button id="r-csv" class="btn" type="button">Baixar CSV</button>
+         <button id="r-xlsx" class="btn verde" type="button">Baixar Excel (.xlsx)</button></p>
+      <div class="tabela-rolavel"><table class="dados"><thead id="r-cab"></thead><tbody id="r-corpo"></tbody></table></div>
+    </section>
+  </main>
+  <script type="module" src="../js/relatorios.js"></script>
+</body>
+</html>

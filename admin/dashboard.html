@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dashboard — Credenciamento 2º Fórum Baiano</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body class="admin">
+  <header id="topo"></header>
+  <main class="conteudo-admin">
+    <h1>Dashboard de credenciamento</h1>
+    <p id="msg-permissao" class="msg erro" role="alert" hidden>Você não tem permissão para acessar a página solicitada.</p>
+
+    <section class="grade-indicadores" aria-label="Indicadores">
+      <div class="indicador"><div class="rotulo">Total de inscritos</div><div class="valor" id="ind-total">–</div></div>
+      <div class="indicador"><div class="rotulo">Inscrições confirmadas</div><div class="valor" id="ind-confirmadas">–</div></div>
+      <div class="indicador ok"><div class="rotulo">Check-ins realizados</div><div class="valor" id="ind-checkins">–</div></div>
+      <div class="indicador alerta"><div class="rotulo">Pendentes de check-in</div><div class="valor" id="ind-pendentes">–</div></div>
+      <div class="indicador"><div class="rotulo">Inscrições não confirmadas</div><div class="valor" id="ind-nao-confirmadas">–</div></div>
+      <div class="indicador destaque"><div class="rotulo">Percentual de presença</div><div class="valor" id="ind-percentual">–</div>
+        <div class="progresso" aria-hidden="true"><span id="ind-barra"></span></div></div>
+    </section>
+
+    <div class="linha-2col">
+      <section class="painel" aria-labelledby="t-evolucao">
+        <h2 id="t-evolucao">Evolução dos check-ins</h2>
+        <div class="legenda">
+          <span class="l-barra">Check-ins no intervalo</span>
+          <span class="l-linha">Acumulado</span>
+          <label class="sr-only" for="intervalo">Intervalo do gráfico</label>
+          <select id="intervalo" aria-label="Intervalo do gráfico">
+            <option value="15">A cada 15 min</option>
+            <option value="30" selected>A cada 30 min</option>
+            <option value="60">A cada hora</option>
+          </select>
+        </div>
+        <svg id="grafico" class="grafico" viewBox="0 0 720 280" role="img" aria-label="Gráfico da evolução dos check-ins"></svg>
+      </section>
+      <section class="painel" aria-labelledby="t-recentes">
+        <h2 id="t-recentes">Últimos check-ins</h2>
+        <ul id="recentes" class="lista-recentes"></ul>
+        <p class="nota" id="atualizado"></p>
+      </section>
+    </div>
+
+    <section class="painel so-admin" id="painel-config" hidden aria-labelledby="t-config">
+      <h2 id="t-config">Configurações do credenciamento</h2>
+      <div class="cfg-linha formulario-admin">
+        <div class="campo"><label for="cfg-aberto">Credenciamento público</label>
+          <select id="cfg-aberto"><option value="true">Aberto</option><option value="false">Fechado</option></select></div>
+        <div class="campo"><label for="cfg-tempo">Retorno automático (segundos)</label>
+          <input id="cfg-tempo" type="number" min="3" max="60" step="1"></div>
+        <div class="campo"><button id="cfg-salvar" class="btn" type="button">Salvar configurações</button></div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="../js/dashboard.js"></script>
+</body>
+</html>

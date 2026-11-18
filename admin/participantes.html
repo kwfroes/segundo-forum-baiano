@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Participantes — Credenciamento 2º Fórum Baiano</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body class="admin">
+  <header id="topo"></header>
+  <main class="conteudo-admin">
+    <h1>Participantes</h1>
+    <form id="filtros" class="filtros formulario-admin" novalidate>
+      <div><label for="f-busca">Buscar por nome, CPF ou matrícula</label><input id="f-busca" type="search" autocomplete="off" placeholder="Nome, CPF ou matrícula"></div>
+      <div><label for="f-secretaria">Secretaria</label><select id="f-secretaria"><option value="">Todas</option></select></div>
+      <div><label for="f-orgao">Órgão/unidade</label><select id="f-orgao"><option value="">Todos</option></select></div>
+      <div><label for="f-municipio">Município</label><select id="f-municipio"><option value="">Todos</option></select></div>
+      <div><label for="f-inscricao">Inscrição</label><select id="f-inscricao"><option value="todas">Todas</option><option value="confirmada">Confirmada</option><option value="nao_confirmada">Não confirmada</option></select></div>
+      <div><label for="f-checkin">Check-in</label><select id="f-checkin"><option value="todos">Todos</option><option value="presente">Presente</option><option value="ausente">Ausente</option></select></div>
+    </form>
+
+    <div class="tabela-rolavel">
+      <table class="dados tabela-acoes" id="tabela">
+        <caption class="sr-only">Participantes inscritos</caption>
+        <thead id="cabecalho"></thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+    <div class="paginacao">
+      <span id="contagem" role="status"></span>
+      <span>
+        <button id="anterior" class="btn sec pequeno" type="button">Anterior</button>
+        <span id="pagina"></span>
+        <button id="proxima" class="btn sec pequeno" type="button">Próxima</button>
+      </span>
+    </div>
+  </main>
+  <script type="module" src="../js/participantes.js"></script>
+</body>
+</html>

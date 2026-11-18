@@ -1,0 +1,110 @@
+/* =====================================================================
+   style.css — base + credenciamento público
+   Identidade: arte oficial do 2º Fórum Baiano de Compras Públicas
+   ===================================================================== */
+:root {
+  --vermelho: #B3131B;
+  --azul-profundo: #104F91;
+  --azul-vivo: #1598E5;
+  --azul-vivo-escuro: #0F7AC0;
+  --ciano: #83DDF0;
+  --branco: #FFFFFF;
+  --fundo-2: #F3F7FA;
+  --texto: #243B53;
+  --texto-suave: #5B7189;
+  --sucesso: #218653;
+  --alerta: #D99A21;
+  --borda: #D5E3EE;
+  --sombra: 0 10px 30px rgba(16, 79, 145, .14);
+  --raio: 20px;
+  --fonte: "Segoe UI", "Helvetica Neue", Arial, system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  font-family: var(--fonte); color: var(--texto); background: var(--branco);
+  line-height: 1.45;
+}
+[hidden] { display: none !important; }
+img { max-width: 100%; height: auto; }
+h1, h2, h3 { color: var(--azul-profundo); line-height: 1.15; margin: 0 0 .5em; }
+a { color: var(--azul-vivo-escuro); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 3px solid var(--azul-vivo); outline-offset: 2px; }
+
+/* ---------- Fundo decorativo (círculos e linhas de conexão da arte) ---------- */
+.fundo { position: fixed; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; background: var(--branco); }
+.fundo i { position: absolute; border-radius: 50%; display: block; }
+.fundo .aro  { border: 1.5px solid rgba(131, 221, 240, .65); }
+.fundo .disco{ background: radial-gradient(circle at 35% 30%, #A7E7F5, var(--ciano)); box-shadow: 4px 6px 14px rgba(16, 79, 145, .20); opacity: .85; }
+.fundo .disco.escuro { background: radial-gradient(circle at 35% 30%, #5AB3E0, #3F8DC7); }
+.fundo .c1 { width: 340px; height: 340px; left: -140px; top: 52%; }
+.fundo .c2 { width: 210px; height: 210px; right: -70px; bottom: 6%; }
+.fundo .c3 { width: 90px;  height: 90px;  left: 12%;  bottom: 8%; }
+.fundo .c4 { width: 56px;  height: 56px;  right: 14%; top: 20%; }
+.fundo .c5 { width: 38px;  height: 38px;  right: 22%; top: 30%; }
+.fundo .c6 { width: 520px; height: 520px; right: -200px; top: -180px; }
+.fundo .c7 { width: 420px; height: 420px; left: -160px; top: -200px; }
+.fundo .c8 { width: 130px; height: 130px; left: -40px; bottom: -40px; }
+
+/* ---------- Estrutura da página pública ---------- */
+.publico { display: flex; flex-direction: column; }
+.publico main { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; gap: 24px; }
+.cabecalho-evento { text-align: center; }
+.cabecalho-evento img { width: min(440px, 80vw); height: auto; display: block; margin: 0 auto; }
+.publico footer { position: relative; z-index: 1; display: flex; justify-content: center; padding: 8px 16px 20px; }
+.publico footer img { width: min(420px, 86vw); height: auto; border-radius: 12px; box-shadow: 0 4px 16px rgba(16, 79, 145, .12); }
+
+.cartao {
+  width: min(560px, 100%); background: var(--branco); border-radius: 28px; box-shadow: var(--sombra);
+  padding: 36px 32px; border: 1px solid var(--borda); text-align: center;
+}
+.cartao h1 { font-size: 2.1rem; color: var(--vermelho); margin-bottom: .25em; }
+.cartao .orientacao { margin: 0 0 24px; font-size: 1.15rem; color: var(--azul-profundo); }
+
+.campo-cpf {
+  width: 100%; height: 72px; font-size: 2rem; font-weight: 600; text-align: center; letter-spacing: .06em;
+  color: var(--azul-profundo); background: var(--fundo-2); border: 2px solid var(--ciano); border-radius: 16px;
+  font-variant-numeric: tabular-nums; transition: border-color .15s, box-shadow .15s;
+}
+.campo-cpf::placeholder { color: #9DB3C6; font-weight: 400; }
+.campo-cpf:focus { outline: none; border-color: var(--azul-vivo); box-shadow: 0 0 0 4px rgba(21, 152, 229, .22); background: #fff; }
+.campo-cpf[aria-invalid="true"] { border-color: var(--vermelho); }
+
+.botao {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
+  width: 100%; min-height: 64px; margin-top: 16px; padding: 0 24px; border: 0; border-radius: 16px;
+  font: 700 1.3rem var(--fonte); color: #fff; background: var(--azul-vivo); transition: background .15s, transform .05s;
+}
+.botao:hover { background: var(--azul-vivo-escuro); }
+.botao:active { transform: translateY(1px); }
+.botao:disabled { opacity: .65; cursor: progress; }
+.botao.secundario { background: var(--fundo-2); color: var(--azul-profundo); border: 2px solid var(--borda); }
+.botao.secundario:hover { background: #E7F0F7; }
+
+.mensagem-erro { min-height: 1.5em; margin: 10px 0 0; color: var(--vermelho); font-weight: 600; }
+
+.girando { width: 22px; height: 22px; border: 3px solid rgba(255,255,255,.5); border-top-color: #fff; border-radius: 50%; animation: gira .8s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+
+/* ---------- Resultado ---------- */
+.resultado .icone { width: 96px; height: 96px; margin: 0 auto 12px; display: block; }
+.resultado h2 { font-size: 1.9rem; margin-bottom: .3em; }
+.resultado p { font-size: 1.2rem; margin: .35em 0; }
+.resultado .nome-participante { font-size: 1.7rem; font-weight: 700; color: var(--azul-profundo); margin: .4em 0; overflow-wrap: anywhere; }
+.resultado .detalhe { color: var(--texto-suave); font-size: 1.05rem; }
+.resultado .retorno { margin-top: 18px; color: var(--texto-suave); font-size: 1rem; }
+.resultado.sucesso { box-shadow: var(--sombra), inset 0 8px 0 var(--sucesso); }
+.resultado.sucesso h2 { color: var(--sucesso); }
+.resultado.alerta { box-shadow: var(--sombra), inset 0 8px 0 var(--alerta); }
+.resultado.alerta h2 { color: #9A6A0C; }
+.resultado.erro { box-shadow: var(--sombra), inset 0 8px 0 var(--vermelho); }
+.resultado.erro h2 { color: var(--vermelho); }
+.resultado .barra { height: 6px; border-radius: 3px; background: var(--fundo-2); overflow: hidden; margin-top: 8px; }
+.resultado .barra > span { display: block; height: 100%; width: 100%; background: var(--azul-vivo); transform-origin: left; }
+
+.aviso-fechado { background: #FFF7E5; border: 1px solid var(--alerta); color: #6B4A06; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#104F91">
+  <title>Credenciamento — 2º Fórum Baiano de Compras Públicas</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="publico">
+  <div class="fundo" aria-hidden="true"><i class="aro c6"></i><i class="aro c7"></i><i class="aro c1"></i><i class="disco c1"></i><i class="disco escuro c8"></i><i class="disco c2"></i><i class="disco c3"></i><i class="disco c4"></i><i class="disco c5"></i></div>
+
+  <main>
+    <div class="cabecalho-evento">
+      <img src="assets/logo-forum.png" alt="2º Fórum Baiano de Compras Públicas — Compras Públicas em Transformação: Estratégia, inovação e integração" width="585" height="265">
+    </div>
+
+    <!-- RF001 — Tela inicial -->
+    <section id="tela-inicial" class="cartao" aria-labelledby="titulo-cred">
+      <h1 id="titulo-cred">Credenciamento</h1>
+      <p class="orientacao">Informe seu CPF para realizar o check-in</p>
+      <div id="aviso-fechado" class="aviso-fechado" role="status" hidden>O credenciamento não está disponível no momento. Procure a equipe de organização.</div>
+      <form id="form-checkin" novalidate autocomplete="off">
+        <label for="cpf" class="sr-only">CPF</label>
+        <input id="cpf" class="campo-cpf" type="text" inputmode="numeric" pattern="[0-9.\-]*" maxlength="14"
+               placeholder="000.000.000-00" autocomplete="off" autocapitalize="off" spellcheck="false"
+               aria-describedby="erro-cpf" autofocus>
+        <p id="erro-cpf" class="mensagem-erro" role="alert" aria-live="assertive"></p>
+        <button id="btn-checkin" class="botao" type="submit">Realizar check-in</button>
+      </form>
+    </section>
+
+    <!-- RF003 / RF005 — Resultado -->
+    <section id="tela-resultado" class="cartao resultado" aria-live="polite" hidden>
+      <svg id="icone-resultado" class="icone" viewBox="0 0 96 96" role="img" aria-hidden="true"></svg>
+      <h2 id="res-titulo"></h2>
+      <p id="res-nome" class="nome-participante" hidden></p>
+      <p id="res-mensagem"></p>
+      <p id="res-quando" class="detalhe" hidden></p>
+      <p id="res-evento" class="detalhe"></p>
+      <p class="retorno">Voltando à tela inicial em <strong id="res-contagem">8</strong> s</p>
+      <div class="barra"><span id="res-barra"></span></div>
+      <button id="btn-voltar" class="botao secundario" type="button">Novo check-in</button>
+    </section>
+  </main>
+
+  <footer>
+    <img src="assets/imagens/realizacao.png" alt="Realização: Compras Bahia, Publix Instituto, BID, Governo do Estado da Bahia — Secretaria da Administração e Secretaria da Fazenda" width="510" height="56">
+  </footer>
+
+  <script type="module" src="js/checkin.js"></script>
+</body>
+</html>

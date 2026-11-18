@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Importar base — Credenciamento 2º Fórum Baiano</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body class="admin">
+  <header id="topo"></header>
+  <main class="conteudo-admin">
+    <h1>Importação da base de inscritos</h1>
+    <section class="painel formulario-admin" aria-labelledby="t-imp">
+      <h2 id="t-imp">1. Selecione o arquivo CSV</h2>
+      <ol class="passos">
+        <li>Na planilha, use <em>Arquivo → Salvar como → CSV UTF-8</em>.</li>
+        <li>A primeira linha deve conter os nomes das colunas. <button id="modelo" class="link-botao" type="button">Baixar modelo de CSV</button></li>
+        <li>CPFs são normalizados; registros já existentes (mesmo CPF) são <strong>atualizados</strong> e os check-ins <strong>não são alterados</strong>.</li>
+      </ol>
+      <div class="campo"><label for="arquivo">Arquivo CSV</label><input id="arquivo" type="file" accept=".csv,text/csv"></div>
+    </section>
+
+    <section id="previa" class="painel" hidden aria-live="polite">
+      <h2>2. Conferência antes de importar</h2>
+      <div id="resumo-previa" class="resumo-import"></div>
+      <p id="colunas-info" class="nota"></p>
+      <div class="tabela-rolavel"><table class="dados"><thead id="p-cab"></thead><tbody id="p-corpo"></tbody></table></div>
+      <p><button id="importar" class="btn" type="button">Importar registros válidos</button></p>
+      <progress id="progresso" max="100" value="0" hidden></progress>
+    </section>
+
+    <section id="relatorio" class="painel" hidden aria-live="polite">
+      <h2>3. Relatório da importação</h2>
+      <div id="resumo-final" class="resumo-import"></div>
+      <p><button id="baixar-erros" class="btn sec" type="button">Baixar relatório de erros e avisos (CSV)</button></p>
+      <div class="tabela-rolavel"><table class="dados"><thead><tr><th>Linha</th><th>Tipo</th><th>Participante</th><th>Mensagem</th></tr></thead><tbody id="r-ocorrencias"></tbody></table></div>
+    </section>
+  </main>
+  <script type="module" src="../js/importar.js"></script>
+</body>
+</html>
