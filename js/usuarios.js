@@ -76,7 +76,7 @@ function campoSenha(valorInicial) {
   const entrada = el('input', { type: 'text', value: valorInicial, autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Senha temporária', maxlength: 72 });
   const gerar = el('button', { class: 'btn sec', type: 'button', onclick: () => { entrada.value = gerarSenhaTemporaria(); } }, 'Gerar outra');
   return { entrada, bloco: el('div', { class: 'campo' },
-    el('label', {}, 'Senha temporária (mínimo de 12 caracteres)'),
+    el('label', {}, 'Senha temporária (mínimo de 8 caracteres)'),
     el('div', { class: 'senha-linha' }, entrada, gerar),
     el('p', { class: 'nota' }, 'O usuário será obrigado a trocá-la no primeiro acesso.')) };
 }
@@ -123,7 +123,7 @@ async function novo() {
     aoConfirmar: async () => {
       if (!nome.value.trim()) return 'Informe o nome.';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) return 'Informe um e-mail válido.';
-      if (senha.entrada.value.length < 12) return 'A senha temporária deve ter ao menos 12 caracteres.';
+      if (senha.entrada.value.length < 8) return 'A senha temporária deve ter ao menos 8 caracteres.';
       const r = await chamarFuncao({ acao: 'criar', nome: nome.value.trim(), email: email.value.trim(), perfil: sel.value, senha: senha.entrada.value });
       if (!r.ok) return r.mensagem;
       resultado = r;
@@ -185,7 +185,7 @@ async function novaSenha(u) {
     titulo: `Nova senha — ${u.nome}`, textoConfirmar: 'Redefinir senha',
     corpo: [el('p', {}, `A senha atual de ${u.email} será substituída. O usuário precisará criar uma nova senha no próximo acesso.`), senha.bloco],
     aoConfirmar: async () => {
-      if (senha.entrada.value.length < 12) return 'A senha temporária deve ter ao menos 12 caracteres.';
+      if (senha.entrada.value.length < 8) return 'A senha temporária deve ter ao menos 8 caracteres.';
       const r = await chamarFuncao({ acao: 'redefinir_senha', usuario_id: u.id, senha: senha.entrada.value });
       return r.ok ? null : r.mensagem;
     },

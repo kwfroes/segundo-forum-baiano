@@ -93,7 +93,7 @@ $('form-recuperar').addEventListener('submit', async (e) => {
 $('form-nova-senha').addEventListener('submit', async (e) => {
   e.preventDefault();
   const s1 = $('nova-senha').value, s2 = $('nova-senha2').value;
-  if (s1.length < 12) return msg('msg-nova', 'Use ao menos 12 caracteres.');
+  if (s1.length < 8) return msg('msg-nova', 'Use ao menos 8 caracteres.');
   if (s1 !== s2) return msg('msg-nova', 'As senhas não coincidem.');
   const { error } = await sb.auth.updateUser({ password: s1, data: { trocar_senha: false } });
   if (error) return msg('msg-nova', 'Não foi possível definir a senha: ' + mensagemErro(error));
