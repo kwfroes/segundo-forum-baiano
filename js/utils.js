@@ -37,6 +37,23 @@ export function cpfOculto(valor) {
   return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
 }
 
+/* ------------------------------ Senhas ------------------------------ */
+/** Gera senha temporária forte (16 caracteres, sem símbolos ambíguos) com o gerador criptográfico do navegador. */
+export function gerarSenhaTemporaria(tamanho = 16) {
+  const grupos = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnopqrstuvwxyz', '23456789', '#@%+=?'];
+  const todos = grupos.join('');
+  const sorteio = (max) => {                      // sem viés (rejeição)
+    const limite = Math.floor(0x100000000 / max) * max;
+    const b = new Uint32Array(1);
+    do { crypto.getRandomValues(b); } while (b[0] >= limite);
+    return b[0] % max;
+  };
+  const chars = grupos.map((g) => g[sorteio(g.length)]);          // ao menos 1 de cada grupo
+  while (chars.length < tamanho) chars.push(todos[sorteio(todos.length)]);
+  for (let i = chars.length - 1; i > 0; i--) { const j = sorteio(i + 1); [chars[i], chars[j]] = [chars[j], chars[i]]; }
+  return chars.join('');
+}
+
 /* ------------------------------ Datas ------------------------------ */
 const fmtDataHora = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, dateStyle: 'short', timeStyle: 'medium' });
 const fmtData = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit', year: 'numeric' });

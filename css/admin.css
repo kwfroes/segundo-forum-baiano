@@ -121,3 +121,14 @@ dialog.largo { width: min(900px, 96vw); }
 .criterio input[type="radio"] { width: auto; min-height: 0; margin-top: 4px; }
 .criterio small { display: block; font-weight: 400; color: var(--texto-suave); }
 .lista-molde { columns: 2; column-gap: 24px; font-size: .86rem; margin: 8px 0; padding-left: 18px; }
+
+/* Usuários */
+.dlg-form .campo { margin-bottom: 12px; }
+.dlg-form label { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 4px; color: var(--azul-profundo); }
+.senha-linha { display: flex; gap: 8px; }
+.senha-linha input { font-family: ui-monospace, Consolas, "Courier New", monospace; letter-spacing: .04em; }
+.credenciais { background: var(--fundo-2); border: 1.5px dashed var(--azul-vivo); border-radius: 12px; padding: 12px 14px; font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 1rem; overflow-wrap: anywhere; }
+.credenciais div + div { margin-top: 6px; }
+.credenciais strong { font-family: var(--fonte); color: var(--azul-profundo); }
+.barra-topo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.barra-topo h1 { margin: 0; }

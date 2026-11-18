@@ -9,6 +9,8 @@
  *  • CPF: remove pontuação; restaura zeros à esquerda; valida dígitos verificadores.
  *    CPF inválido ou repetido (outra pessoa) → a pessoa entra SEM CPF (atendimento manual).
  *  • Inscrição duplicada (mesmo CPF e mesma pessoa; ou mesmo nome + e-mail) → ignorada e reportada.
+ *  • "Inscrição confirmada": o administrador escolhe o critério na prévia — coluna "Análise SRL/SAEB"
+ *    (SIM, PAINELISTA, PRODUÇÃO e PALESTRANTE = confirmada) ou coluna "Inscrição confirmada" (SIM).
  *  • "Sim, autorizo" / "Não desejo." / "SIM" / "Não se aplica" → booleanos.
  *  • Linhas em branco e colunas extras vazias são ignoradas; nome ausente → erro.
  *  • Check-ins existentes nunca são alterados (tabela separada).

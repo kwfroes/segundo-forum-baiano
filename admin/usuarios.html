@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Usuários — Credenciamento 2º Fórum Baiano</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body class="admin">
+  <header id="topo"></header>
+  <main class="conteudo-admin">
+    <div class="barra-topo">
+      <h1>Usuários do painel</h1>
+      <button id="novo" class="btn" type="button">+ Novo usuário</button>
+    </div>
+    <p class="nota">Administrador: acesso total (importar, relatórios, cancelar check-in, usuários). Operador: dashboard, consulta de participantes e check-in manual. Ninguém é excluído — o acesso é desativado e o histórico fica preservado.</p>
+
+    <div class="tabela-rolavel">
+      <table class="dados tabela-acoes">
+        <caption class="sr-only">Usuários com acesso ao painel</caption>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Situação</th><th>Último acesso</th><th>Ações</th></tr></thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+    <p id="contagem" class="nota" role="status"></p>
+  </main>
+  <script type="module" src="../js/usuarios.js"></script>
+</body>
+</html>

@@ -13,6 +13,7 @@ const PAGINAS = [
   { href: 'participantes.html', rotulo: 'Participantes', admin: false },
   { href: 'relatorios.html',    rotulo: 'Relatórios',    admin: true  },
   { href: 'importar.html',      rotulo: 'Importar base', admin: true  },
+  { href: 'usuarios.html',      rotulo: 'Usuários',      admin: true  },
 ];
 
 /** Verifica sessão e perfil. Redireciona para o login quando necessário. */
@@ -20,6 +21,8 @@ export async function iniciarPagina({ requer = 'staff', pagina } = {}) {
   const sb = clienteAdmin();
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { location.replace('index.html'); return new Promise(() => {}); }
+  // Primeiro acesso / senha redefinida por um administrador: exige trocar a senha antes de usar o painel.
+  if (session.user?.user_metadata?.trocar_senha === true) { location.replace('index.html?erro=trocar_senha'); return new Promise(() => {}); }
 
   const { data: perfil, error } = await sb.rpc('fn_meu_perfil');
   if (error || !perfil) {
@@ -77,7 +80,7 @@ export function aviso(texto, tipo = 'info') {
 }
 
 /* --------------------- Diálogos (substituem alert/confirm/prompt) --------------------- */
-function abrirDialogo({ titulo, corpo, botoes, largo = false }) {
+export function abrirDialogo({ titulo, corpo, botoes, largo = false }) {
   return new Promise((resolve) => {
     const dlg = el('dialog', { class: largo ? 'largo' : '', 'aria-labelledby': 'dlg-titulo' });
     const rodape = el('div', { class: 'dlg-rodape' });
