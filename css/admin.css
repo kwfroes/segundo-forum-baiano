@@ -18,6 +18,7 @@ body.admin .fundo { display: none; }
 
 .conteudo-admin { max-width: 1400px; margin: 0 auto; padding: 24px; position: relative; z-index: 1; }
 .conteudo-admin > h1 { font-size: 1.6rem; margin-bottom: 16px; }
+.conteudo-admin > .painel { margin-top: 16px; }
 
 .painel { background: var(--branco); border: 1px solid var(--borda); border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(16, 79, 145, .06); }
 .painel h2 { font-size: 1.1rem; margin-bottom: 12px; }
@@ -40,6 +41,7 @@ body.admin .fundo { display: none; }
 .legenda span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .legenda .l-barra::before { background: var(--azul-vivo); }
 .legenda .l-linha::before { background: var(--vermelho); height: 3px; vertical-align: 3px; }
+.legenda select { width: auto; min-height: 34px; padding: 4px 10px; margin-left: auto; }
 .lista-recentes { list-style: none; margin: 0; padding: 0; }
 .lista-recentes li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--fundo-2); font-size: .92rem; }
 .lista-recentes time { color: var(--texto-suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -73,6 +75,7 @@ body.admin.login-body .fundo { display: block; }
 .msg.erro { background: #FDECEC; color: #8F0F16; border: 1px solid #F3B7BA; }
 .msg.ok { background: #E8F6EE; color: #17633D; border: 1px solid #A9DBC0; }
 .msg.info { background: #E9F4FC; color: #0B5C97; border: 1px solid #B3D8F0; }
+.msg.alerta { background: #FFF7E5; color: #6B4A06; border: 1px solid #F0D49A; }
 
 /* Filtros e tabela */
 .filtros { display: grid; grid-template-columns: 2fr repeat(5, 1fr); gap: 12px; align-items: end; margin-bottom: 14px; }
@@ -81,10 +84,12 @@ table.dados { width: 100%; border-collapse: collapse; font-size: .88rem; }
 table.dados th { position: sticky; top: 0; background: var(--azul-profundo); color: #fff; text-align: left; padding: 10px; white-space: nowrap; z-index: 1; }
 table.dados th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
 table.dados th button:focus-visible { outline: 2px solid #fff; }
-table.dados td { padding: 8px 10px; border-bottom: 1px solid var(--fundo-2); vertical-align: top; }
+table.dados td { padding: 8px 10px; border-bottom: 1px solid var(--fundo-2); vertical-align: top; white-space: normal; }
 table.dados tr:hover td { background: #F7FBFE; }
 table.dados td.nome { font-weight: 600; color: var(--azul-profundo); min-width: 220px; }
 table.dados td.mono { font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.dados td:nth-child(n+6) { min-width: 120px; }
+.tabela-acoes td.col-acoes { min-width: 250px; }
 .etiqueta { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .78rem; font-weight: 700; white-space: nowrap; }
 .etiqueta.verde { background: #E1F4E9; color: #17633D; }
 .etiqueta.ambar { background: #FFF1D3; color: #7A5206; }
@@ -110,10 +115,9 @@ dialog.largo { width: min(900px, 96vw); }
 .cfg-linha { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; }
 .cfg-linha > div { min-width: 180px; }
 .nota { color: var(--texto-suave); font-size: .88rem; }
-
-.conteudo-admin > .painel { margin-top: 16px; }
-.legenda select { width: auto; min-height: 34px; padding: 4px 10px; margin-left: auto; }
-.tabela-acoes td.col-acoes { min-width: 250px; }
-.tabela-acoes .acoes-tabela { flex-wrap: wrap; }
-table.dados td { white-space: normal; }
-table.dados td:nth-child(n+6) { min-width: 120px; }
+.criterio { border: 1.5px solid var(--borda); border-radius: 12px; padding: 12px 14px; margin: 12px 0; }
+.criterio legend { font-weight: 700; color: var(--azul-profundo); padding: 0 6px; }
+.criterio label { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; margin: 6px 0; cursor: pointer; }
+.criterio input[type="radio"] { width: auto; min-height: 0; margin-top: 4px; }
+.criterio small { display: block; font-weight: 400; color: var(--texto-suave); }
+.lista-molde { columns: 2; column-gap: 24px; font-size: .86rem; margin: 8px 0; padding-left: 18px; }

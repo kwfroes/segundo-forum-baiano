@@ -14,6 +14,6 @@ Aplicação estática (HTML5 + CSS3 + JavaScript) para publicação no **GitHub 
 | `admin/dashboard.html` | Indicadores e gráfico |
 | `admin/participantes.html` | Consulta, check-in manual, cancelamento, histórico |
 | `admin/relatorios.html` | Exportação CSV / Excel (administrador) |
-| `admin/importar.html` | Importação da base por CSV (administrador) |
+| `admin/importar.html` | Importação da base no molde de `Dados 2 forum.csv` (administrador) |
 
 Arte: `assets/logo-forum.png` e `assets/imagens/realizacao.png` foram recortadas da arte "Vem aí!". Substitua pelos arquivos oficiais em alta resolução quando disponíveis (mesmos nomes).

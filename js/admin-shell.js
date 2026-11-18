@@ -96,10 +96,11 @@ function abrirDialogo({ titulo, corpo, botoes, largo = false }) {
 export async function confirmar({ titulo, mensagem, pedirMotivo = false, motivoObrigatorio = false, textoConfirmar = 'Confirmar', perigo = false }) {
   const campo = pedirMotivo ? el('textarea', { rows: 3, maxlength: 500, 'aria-label': 'Motivo', placeholder: 'Motivo' }) : null;
   const erro = el('p', { class: 'msg erro', hidden: true }, 'Informe o motivo (mínimo de 5 caracteres).');
+  const corpoMsg = Array.isArray(mensagem) ? mensagem.map((m) => el('p', {}, m)) : el('p', {}, mensagem);
   let resultado;
   do {
     resultado = await abrirDialogo({
-      titulo, corpo: [el('p', {}, mensagem), campo, campo ? erro : null],
+      titulo, corpo: [corpoMsg, campo, campo ? erro : null],
       botoes: [{ rotulo: 'Cancelar', valor: 'nao', classe: 'sec' }, { rotulo: textoConfirmar, valor: 'sim', classe: perigo ? 'perigo' : '' }],
     });
     if (resultado === 'sim' && motivoObrigatorio && (campo.value.trim().length < 5)) { erro.hidden = false; resultado = 'repetir'; }

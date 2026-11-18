@@ -24,6 +24,8 @@ const COLUNAS = [
   { chave: 'unidade_gestora', rotulo: 'UG' },
   { chave: 'cargo_funcao', rotulo: 'Cargo/função' },
   { chave: 'area_atuacao', rotulo: 'Área de atuação' },
+  { chave: 'analise_srl_saeb', rotulo: 'Análise SRL/SAEB' },
+  { chave: 'tipo_inscricao', rotulo: 'Tipo de inscrição' },
 ];
 
 function montarCabecalho() {
@@ -93,7 +95,9 @@ function linha(p) {
     el('td', {}, p.municipio_lotacao || ''),
     el('td', {}, p.unidade_gestora || ''),
     el('td', {}, p.cargo_funcao || ''),
-    el('td', {}, p.area_atuacao || ''));
+    el('td', {}, p.area_atuacao || ''),
+    el('td', {}, p.analise_srl_saeb || ''),
+    el('td', {}, p.tipo_inscricao || ''));
 }
 
 async function checkinManual(p) {

@@ -31,6 +31,12 @@ export function cpfValido(valor) {
   return dv(c.slice(0, 9)) === Number(c[9]) && dv(c.slice(0, 10)) === Number(c[10]);
 }
 
+/** CPF parcialmente oculto (***.456.789-**) para mensagens e relatórios. */
+export function cpfOculto(valor) {
+  const d = somenteDigitos(valor).padStart(11, '0');
+  return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
+}
+
 /* ------------------------------ Datas ------------------------------ */
 const fmtDataHora = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, dateStyle: 'short', timeStyle: 'medium' });
 const fmtData = new Intl.DateTimeFormat('pt-BR', { timeZone: FUSO, day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -53,7 +59,7 @@ export function el(tag, atributos = {}, ...filhos) {
     else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
     else n.setAttribute(k, v === true ? '' : v);
   }
-  for (const f of filhos.flat()) {
+  for (const f of filhos.flat(Infinity)) {
     if (f === null || f === undefined || f === false) continue;
     n.append(f.nodeType ? f : document.createTextNode(String(f)));
   }
@@ -93,27 +99,48 @@ export function baixarArquivo(conteudo, nome, tipo) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-/** Interpretador de CSV (aspas, quebras de linha em campos, ; ou , como separador, BOM). */
+/**
+ * Decodifica o conteúdo de um arquivo CSV: UTF-8 (com ou sem BOM) e, se inválido,
+ * Windows-1252 (CSV "ANSI" salvo pelo Excel).
+ */
+export function decodificarArquivo(buffer) {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buffer).replace(/^\uFEFF/, '');
+  } catch {
+    return new TextDecoder('windows-1252').decode(buffer);
+  }
+}
+
+/**
+ * Interpretador de CSV (aspas, quebras de linha em campos, ";" ou "," como separador, BOM).
+ * Cada linha retornada recebe a propriedade `numero` = linha física no arquivo (1 = cabeçalho).
+ * Linhas totalmente em branco são descartadas.
+ */
 export function interpretarCsv(texto) {
-  let t = texto.replace(/^\uFEFF/, '');
+  const t = texto.replace(/^\uFEFF/, '');
   const primeira = t.split(/\r?\n/, 1)[0] || '';
   const sep = (primeira.match(/;/g) || []).length >= (primeira.match(/,/g) || []).length ? ';' : ',';
-  const linhas = []; let campo = ''; let linha = []; let aspas = false;
+  const saida = [];
+  let campo = ''; let linha = []; let aspas = false; let numero = 1; let inicio = 1;
+  const fechar = () => {
+    linha.push(campo); campo = '';
+    if (linha.some((c) => c.trim() !== '')) { linha.numero = inicio; saida.push(linha); }
+    linha = [];
+  };
   for (let i = 0; i < t.length; i++) {
     const c = t[i];
     if (aspas) {
       if (c === '"') { if (t[i + 1] === '"') { campo += '"'; i++; } else aspas = false; }
-      else campo += c;
+      else { campo += c; if (c === '\n') numero++; }
     } else if (c === '"') aspas = true;
     else if (c === sep) { linha.push(campo); campo = ''; }
     else if (c === '\n' || c === '\r') {
       if (c === '\r' && t[i + 1] === '\n') i++;
-      linha.push(campo); campo = '';
-      linhas.push(linha); linha = [];
+      fechar(); numero++; inicio = numero;
     } else campo += c;
   }
-  if (campo !== '' || linha.length) { linha.push(campo); linhas.push(linha); }
-  return linhas.filter((l) => l.some((c) => c.trim() !== ''));
+  if (campo !== '' || linha.length) fechar();
+  return saida;
 }
 
 /** Mensagem amigável a partir de erro do Supabase (sem vazar detalhes técnicos). */
