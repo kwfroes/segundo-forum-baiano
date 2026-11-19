@@ -90,3 +90,22 @@ input[type="tel"]:focus, input[type="time"]:focus { outline: none; border-color:
   .grade-indicadores > .indicador .valor { font-size: 1.6rem; }
 }
 
+/* =====================================================================
+   Cards de indicadores: o NÚMERO fica sempre na mesma altura (acrescentado ao FINAL do checkin-duplo.css)
+   ===================================================================== */
+@supports (grid-template-rows: subgrid) {
+  .grade-indicadores > .indicador,
+  .grade-duplo > .indicador {
+    display: grid; grid-template-rows: subgrid; grid-row: span 3; row-gap: 0; align-content: start;
+  }
+  .grade-indicadores > .indicador .rotulo,
+  .grade-duplo > .indicador .rotulo { align-self: start; }
+  .grade-indicadores > .indicador .valor,
+  .grade-duplo > .indicador .valor { align-self: center; }
+}
+/* Navegadores antigos, sem subgrid: reserva a altura de 2 linhas de rótulo (mesmo efeito na grande maioria dos casos) */
+@supports not (grid-template-rows: subgrid) {
+  .grade-indicadores > .indicador .rotulo,
+  .grade-duplo > .indicador .rotulo { min-height: 2.9em; }
+}
+
