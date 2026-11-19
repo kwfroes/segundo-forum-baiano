@@ -1,0 +1,18 @@
+1) Copie os 5 arquivos (favicon.svg, favicon.ico, favicon-16.png, favicon-32.png, apple-touch-icon.png, icone-512.png) para a pasta  assets/favicon/  do projeto.
+
+2) Em admin/*.html (6 páginas), logo abaixo de <title>…</title>, acrescente:
+  <link rel="icon" href="../assets/favicon/favicon.ico" sizes="32x32">
+  <link rel="icon" href="../assets/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/favicon/apple-touch-icon.png">
+
+3) Em index.html (raiz), no mesmo lugar:
+  <link rel="icon" href="assets/favicon/favicon.ico" sizes="32x32">
+  <link rel="icon" href="assets/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/favicon/apple-touch-icon.png">
+
+Atalho no VS Code (Ctrl+Shift+H, "Substituir nos arquivos"), para as 6 páginas de admin de uma vez:
+  Pesquisar:   <link rel="stylesheet" href="../css/style.css">
+  Substituir:  <link rel="icon" href="../assets/favicon/favicon.ico" sizes="32x32">\n    <link rel="icon" href="../assets/favicon/favicon.svg" type="image/svg+xml">\n    <link rel="apple-touch-icon" href="../assets/favicon/apple-touch-icon.png">\n    <link rel="stylesheet" href="../css/style.css">
+  (ative o modo "Expressão regular" para o \n virar quebra de linha; em "arquivos a incluir": admin/*.html)
+
+4) Para o navegador mostrar o ícone novo: abra  http://127.0.0.1:5500/assets/favicon/favicon.svg  e dê Ctrl+F5; depois recarregue a página. Navegadores guardam favicons por muito tempo.
