@@ -4,8 +4,12 @@
  *  • Criar login e redefinir senha: Edge Function "admin-usuarios" (a chave service_role fica só no servidor).
  *  • Senhas são TEMPORÁRIAS: o usuário é obrigado a trocá-las no primeiro acesso.
  *  • A senha só é exibida na tela uma vez e nunca é guardada pelo sistema.
+ *  • USUÁRIO PROTEGIDO: só ele mesmo altera os próprios dados (e só o nome); para os demais administradores os
+ *    botões ficam desabilitados com a explicação. O banco recusa de qualquer forma (a tela é só informativa).
+ *  • Botões só com ícone: title (dica ao passar o mouse) + aria-label.
  */
 import { iniciarPagina, aviso, confirmar, abrirDialogo } from './admin-shell.js';
+import { botaoIcone, comIcone, etiquetaIcone } from './icones.js';
 import { el, limpar, formatarDataHora, gerarSenhaTemporaria, mensagemErro } from './utils.js';
 
 const $ = (id) => document.getElementById(id);
@@ -39,16 +43,28 @@ async function carregar() {
   $('contagem').textContent = `${usuarios.length} usuário(s), ${ativos} ativo(s).`;
 }
 
+const MOTIVO_PROTEGIDO = 'Usuário protegido: só ele mesmo pode alterar os próprios dados.';
+const MOTIVO_PROPRIO = 'Você não pode desativar o próprio acesso.';
+
 function linha(u) {
   const eu = u.id === meuId;
+  const protegido = u.protegido === true;
+  const bloqueado = protegido && !eu;                         // protegido: só ele mesmo mexe
+  /** Botão só com ícone. Desabilitado, vai dentro de um <span> para a dica aparecer mesmo assim. */
+  const botao = (opcoes, motivo) => {
+    const b = botaoIcone({ ...opcoes, desabilitado: !!opcoes.desabilitado });
+    return opcoes.desabilitado ? el('span', { class: 'bloqueado', title: motivo }, b) : b;
+  };
   const acoes = el('div', { class: 'acoes-tabela' },
-    el('button', { class: 'btn sec pequeno', type: 'button', onclick: () => editar(u) }, 'Editar'),
-    el('button', { class: 'btn sec pequeno', type: 'button', disabled: eu, title: eu ? 'Você não pode desativar o próprio acesso.' : null, onclick: () => alternarAtivo(u) }, u.ativo ? 'Desativar' : 'Ativar'),
-    el('button', { class: 'btn sec pequeno', type: 'button', onclick: () => novaSenha(u) }, 'Nova senha'),
-    el('button', { class: 'btn sec pequeno', type: 'button', onclick: () => enviarLink(u) }, 'Link por e-mail'),
+    botao({ icone: 'editar', titulo: 'Editar nome e perfil', rotuloAria: `Editar ${u.nome}`, desabilitado: bloqueado, onclick: () => editar(u) }, MOTIVO_PROTEGIDO),
+    botao({ icone: u.ativo ? 'user-x' : 'user-ok', titulo: u.ativo ? 'Desativar acesso' : 'Ativar acesso', rotuloAria: `${u.ativo ? 'Desativar' : 'Ativar'} acesso de ${u.nome}`,
+      classe: u.ativo ? 'perigo' : '', desabilitado: eu || bloqueado, onclick: () => alternarAtivo(u) }, bloqueado ? MOTIVO_PROTEGIDO : MOTIVO_PROPRIO),
+    botao({ icone: 'chave', titulo: 'Definir nova senha temporária', rotuloAria: `Definir nova senha temporária para ${u.nome}`, desabilitado: bloqueado, onclick: () => novaSenha(u) }, MOTIVO_PROTEGIDO),
+    botao({ icone: 'email', titulo: 'Enviar link de redefinição por e-mail', rotuloAria: `Enviar link de redefinição por e-mail para ${u.nome}`, desabilitado: bloqueado, onclick: () => enviarLink(u) }, MOTIVO_PROTEGIDO),
   );
   return el('tr', {},
-    el('td', { class: 'nome' }, u.nome, eu ? el('span', { class: 'etiqueta cinza' }, ' você') : null),
+    el('td', { class: 'nome' }, u.nome, eu ? el('span', { class: 'etiqueta cinza' }, ' você') : null,
+      protegido ? etiquetaIcone('cadeado', 'Usuário protegido: só ele mesmo pode alterar os próprios dados; remoção apenas diretamente no Supabase.', 'prot') : null),
     el('td', {}, u.email),
     el('td', {}, el('span', { class: 'etiqueta ' + (u.perfil === 'administrador' ? 'verde' : 'cinza') }, ROTULO_PERFIL[u.perfil] || u.perfil)),
     el('td', {}, el('span', { class: 'etiqueta ' + (u.ativo ? 'verde' : 'vermelha') }, u.ativo ? 'Ativo' : 'Desativado')),
@@ -74,7 +90,7 @@ async function formulario({ titulo, corpo, textoConfirmar, aoConfirmar }) {
 
 function campoSenha(valorInicial) {
   const entrada = el('input', { type: 'text', value: valorInicial, autocomplete: 'off', spellcheck: 'false', 'aria-label': 'Senha temporária', maxlength: 72 });
-  const gerar = el('button', { class: 'btn sec', type: 'button', onclick: () => { entrada.value = gerarSenhaTemporaria(); } }, 'Gerar outra');
+  const gerar = botaoIcone({ icone: 'atualizar', titulo: 'Gerar outra senha', classe: 'grande', onclick: () => { entrada.value = gerarSenhaTemporaria(); } });
   return { entrada, bloco: el('div', { class: 'campo' },
     el('label', {}, 'Senha temporária (mínimo de 8 caracteres)'),
     el('div', { class: 'senha-linha' }, entrada, gerar),
@@ -157,6 +173,7 @@ async function editar(u) {
       if (!nome.value.trim()) return 'Informe o nome.';
       const { data, error } = await sb.rpc('fn_admin_usuario_atualizar', { p_usuario: u.id, p_nome: nome.value.trim(), p_perfil: sel.value, p_ativo: u.ativo });
       if (error) return mensagemErro(error);
+      if (data?.status === 'protegido') return MOTIVO_PROTEGIDO;
       return data?.status === 'sucesso' ? null : 'Usuário não encontrado.';
     },
   });
@@ -175,6 +192,7 @@ async function alternarAtivo(u) {
   if (!ok) return;
   const { data, error } = await sb.rpc('fn_admin_usuario_atualizar', { p_usuario: u.id, p_nome: u.nome, p_perfil: u.perfil, p_ativo: novoEstado });
   if (error) return aviso(mensagemErro(error), 'erro');
+  if (data?.status === 'protegido') return aviso(MOTIVO_PROTEGIDO, 'erro');
   if (data?.status !== 'sucesso') return aviso('Usuário não encontrado.', 'erro');
   aviso(novoEstado ? 'Acesso ativado.' : 'Acesso desativado.', 'ok'); carregar();
 }
@@ -202,5 +220,6 @@ async function enviarLink(u) {
   if (error) aviso(mensagemErro(error), 'erro'); else aviso('Se o e-mail estiver correto, o link foi enviado.', 'ok');
 }
 
+comIcone($('novo'), 'user-plus', 'Novo usuário');
 $('novo').addEventListener('click', novo);
 await carregar();

@@ -3,13 +3,18 @@
  *  • Check-in pelo painel: UM CLIQUE, sem justificativa (operador e administrador). Fica na auditoria.
  *  • Check-in duplo: um botão por período (manhã / tarde).
  *  • Incluir participante que não está na base (nome, CPF, e-mail e justificativa obrigatórios; celular opcional).
+ *  • Editar dados do participante: o operador altera NOME e CPF; o administrador altera QUALQUER dado cadastral.
+ *    (O banco valida o perfil de novo; o CPF aparece sempre mascarado e toda alteração fica na auditoria.)
  *  • Cancelar check-in e confirmar inscrição: somente administrador (com motivo).
+ *  • Botões só com ícone (title + aria-label); textos longos da tabela em uma linha, com o texto completo ao passar o mouse.
+ *    O NOME do participante nunca é cortado.
  * CPF é exibido sempre mascarado; a busca por CPF é feita no servidor.
  *
  * DESEMPENHO: os filtros e a lista são pedidos AO MESMO TEMPO (antes eram em sequência) e os filtros
  * ficam em cache na aba; respostas antigas (quando se digita rápido na busca) são descartadas.
  */
 import { iniciarPagina, aviso, confirmar, informar, abrirDialogo } from './admin-shell.js';
+import { botaoIcone, soIcone, comIcone, etiquetaIcone } from './icones.js';
 import { el, limpar, debounce, formatarDataHora, formatarHoraCurta, mensagemErro, mascararCpf, cpfValido, somenteDigitos } from './utils.js';
 
 const $ = (id) => document.getElementById(id);
@@ -122,16 +127,18 @@ function celulaCheckin(p) {
   const blocos = [];
   const bloco = (periodoBanco, rotulo, quando, periodoCancelar, periodoRegistrar) => {
     const linhaEl = el('div', { class: 'periodo-linha' });
+    const dePeriodo = rotulo ? ` da ${rotulo.toLowerCase()}` : '';        // "Manhã" já aparece ao lado: o botão só diz "Check-in"
     if (rotulo) linhaEl.append(el('span', { class: 'rot' }, rotulo));
     if (quando) {
       linhaEl.append(el('span', { class: 'etiqueta ' + (periodoBanco === 'tarde' ? 'verde' : periodoBanco === 'manha' ? 'azul' : 'verde'), title: formatarDataHora(quando) },
         rotulo ? formatarHoraCurta(quando) : `Presente ${formatarDataHora(quando)}`));
       if (ehAdmin) {
-        linhaEl.append(el('button', { class: 'btn-x', type: 'button', title: 'Cancelar este check-in', 'aria-label': `Cancelar check-in${rotulo ? ' da ' + rotulo.toLowerCase() : ''} de ${p.nome_completo}`,
-          onclick: () => cancelar(p, periodoCancelar, rotulo) }, '✕'));
+        linhaEl.append(botaoIcone({ icone: 'fechar', titulo: `Cancelar check-in${dePeriodo}`, rotuloAria: `Cancelar check-in${dePeriodo} de ${p.nome_completo}`,
+          classe: 'perigo mini', tam: 16, onclick: () => cancelar(p, periodoCancelar, rotulo) }));
       }
     } else if (p.inscricao_confirmada) {
-      linhaEl.append(el('button', { class: 'btn verde mini', type: 'button', onclick: () => checkin(p, periodoRegistrar) }, rotulo ? `+ ${rotulo}` : 'Check-in'));
+      linhaEl.append(el('button', { class: 'btn verde mini', type: 'button', title: `Registrar check-in${dePeriodo}`,
+        'aria-label': `Registrar check-in${dePeriodo} de ${p.nome_completo}`, onclick: () => checkin(p, periodoRegistrar) }, 'Check-in'));
     } else {
       linhaEl.append(el('span', { class: 'etiqueta cinza' }, rotulo ? '—' : 'Ausente'));
     }
@@ -148,27 +155,32 @@ function celulaCheckin(p) {
   return blocos;
 }
 
+/** Texto longo em UMA linha, com reticências; o conteúdo completo aparece ao passar o mouse. */
+const trunca = (valor, tamanho = 'media') => (valor ? el('span', { class: 'trunca ' + tamanho, title: valor }, valor) : '');
+
 function linha(p) {
   const acoes = el('div', { class: 'acoes-tabela' });
+  acoes.append(botaoIcone({ icone: 'editar', titulo: 'Editar dados', rotuloAria: `Editar dados de ${p.nome_completo}`, onclick: () => editar(p) }));
   if (ehAdmin) acoes.append(el('button', { class: 'btn sec pequeno', type: 'button', onclick: () => alternarInscricao(p) }, p.inscricao_confirmada ? 'Desconfirmar' : 'Confirmar'));
-  acoes.append(el('button', { class: 'btn sec pequeno', type: 'button', onclick: () => historico(p) }, 'Histórico'));
+  acoes.append(botaoIcone({ icone: 'historico', titulo: 'Histórico de check-ins', rotuloAria: `Histórico de check-ins de ${p.nome_completo}`, onclick: () => historico(p) }));
 
   return el('tr', {},
+    // o NOME fica sempre inteiro (quebra de linha, nunca reticências)
     el('td', { class: 'nome' }, p.nome_completo,
-      p.incluido_manual ? el('span', { class: 'etiqueta incluido', title: p.justificativa_inclusao || 'Incluído manualmente' }, ' incluído manualmente') : null),
+      p.incluido_manual ? etiquetaIcone('user-plus', 'Incluído manualmente' + (p.justificativa_inclusao ? ': ' + p.justificativa_inclusao : ''), 'incl') : null),
     el('td', { class: 'mono' }, p.cpf_mascarado || el('span', { class: 'etiqueta ambar' }, 'sem CPF')),
-    el('td', {}, el('span', { class: 'etiqueta ' + (p.inscricao_confirmada ? 'verde' : 'ambar') }, p.inscricao_confirmada ? 'Confirmada' : 'Não confirmada')),
+    el('td', {}, etiquetaIcone(p.inscricao_confirmada ? 'confirmar' : 'desconf', p.inscricao_confirmada ? 'Inscrição confirmada' : 'Inscrição não confirmada', p.inscricao_confirmada ? 'verde' : 'ambar')),
     el('td', {}, celulaCheckin(p)),
     el('td', { class: 'col-acoes' }, acoes),
     el('td', { class: 'mono' }, p.matricula_funcional || ''),
-    el('td', {}, p.secretaria || ''),
-    el('td', {}, p.orgao_unidade || ''),
-    el('td', {}, p.municipio_lotacao || ''),
+    el('td', {}, trunca(p.secretaria, 'curta')),
+    el('td', {}, trunca(p.orgao_unidade, 'longa')),
+    el('td', {}, trunca(p.municipio_lotacao, 'media')),
     el('td', {}, p.unidade_gestora || ''),
-    el('td', {}, p.cargo_funcao || ''),
-    el('td', {}, p.area_atuacao || ''),
-    el('td', {}, p.analise_srl_saeb || ''),
-    el('td', {}, p.tipo_inscricao || ''));
+    el('td', {}, trunca(p.cargo_funcao, 'media')),
+    el('td', {}, trunca(p.area_atuacao, 'media')),
+    el('td', {}, trunca(p.analise_srl_saeb, 'curta')),
+    el('td', {}, trunca(p.tipo_inscricao, 'curta')));
 }
 
 /* ------------------------------ Ações ------------------------------ */
@@ -230,11 +242,11 @@ async function historico(p) {
 
 /* ----------------- Incluir participante que não está na base ----------------- */
 /** Mantém o diálogo aberto mostrando o erro até dar certo ou o usuário cancelar. */
-async function formulario({ titulo, corpo, textoConfirmar, aoConfirmar }) {
+async function formulario({ titulo, corpo, textoConfirmar, aoConfirmar, largo = false }) {
   const msg = el('p', { class: 'msg erro', role: 'alert', hidden: true });
   for (;;) {
     const r = await abrirDialogo({
-      titulo, corpo: el('div', { class: 'dlg-form' }, corpo, msg),
+      titulo, corpo: el('div', { class: 'dlg-form' }, corpo, msg), largo,
       botoes: [{ rotulo: 'Cancelar', valor: 'nao', classe: 'sec' }, { rotulo: textoConfirmar, valor: 'sim' }],
     });
     if (r !== 'sim') return false;
@@ -316,6 +328,125 @@ async function adicionar() {
   carregar();
 }
 
+/* ----------------------- Editar dados do participante ----------------------- */
+// Operador: nome e CPF. Administrador: todos os campos abaixo. O banco confere o perfil a cada gravação.
+const CAMPOS_TEXTO = [   // [campo, rótulo, tipo do input, tamanho máximo]
+  ['matricula_funcional', 'Matrícula funcional', 'text', 50],
+  ['email_institucional', 'E-mail', 'email', 200],
+  ['telefone_principal', 'Celular', 'tel', 50],
+  ['telefone_secundario', 'Telefone secundário', 'tel', 50],
+  ['secretaria', 'Secretaria', 'text', 300],
+  ['orgao_unidade', 'Órgão/unidade', 'text', 300],
+  ['unidade_gestora', 'Unidade gestora', 'text', 100],
+  ['nome_unidade', 'Nome da unidade', 'text', 300],
+  ['municipio_lotacao', 'Município de lotação', 'text', 150],
+  ['cargo_funcao', 'Cargo/função', 'text', 300],
+  ['area_atuacao', 'Área de atuação', 'text', 300],
+  ['tipo_inscricao', 'Tipo de inscrição', 'text', 100],
+  ['analise_srl_saeb', 'Análise SRL/SAEB', 'text', 1000],
+];
+const CAMPOS_SIMNAO = [  // [campo, rótulo, aceita "não informado"]
+  ['inscricao_confirmada', 'Inscrição confirmada', false],
+  ['autorizacao_contato', 'Autoriza contato', true],
+  ['deseja_atualizacoes', 'Deseja receber atualizações', true],
+  ['devolutiva_enviada', 'Devolutiva enviada', true],
+  ['email_enviado', 'E-mail enviado', true],
+];
+const normaliza = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+const deBool = (v) => (v === true ? 'true' : v === false ? 'false' : '');
+const paraBool = (t) => (t === 'true' ? true : t === 'false' ? false : null);
+
+async function editar(p) {
+  const { data: d, error } = await sb.rpc('fn_admin_obter_participante', { p_participante_id: p.id });
+  if (error) return aviso(mensagemErro(error), 'erro');
+  if (d.status !== 'sucesso') return aviso('Participante não encontrado. Atualize a página.', 'erro');
+  const a = d.participante;
+  const completo = d.completo === true;          // administrador: recebe todos os campos
+
+  const entradas = {};
+  const campoTexto = (k, rotulo, tipo, max) => {
+    const inp = el('input', { type: tipo, maxlength: max, autocomplete: 'off', 'aria-label': rotulo, value: a[k] ?? '' });
+    entradas[k] = inp;
+    return el('div', { class: 'campo' }, el('label', {}, rotulo), inp);
+  };
+  const campoSimNao = (k, rotulo, aceitaVazio) => {
+    const sel = el('select', { 'aria-label': rotulo },
+      aceitaVazio ? el('option', { value: '' }, 'Não informado') : null, el('option', { value: 'true' }, 'Sim'), el('option', { value: 'false' }, 'Não'));
+    sel.value = deBool(a[k]);
+    entradas[k] = sel;
+    return el('div', { class: 'campo' }, el('label', {}, rotulo), sel);
+  };
+
+  // ---- CPF: o atual aparece só mascarado; o formulário recebe o NOVO CPF (ou deixa em branco para manter) ----
+  const novoCpf = el('input', { type: 'text', inputmode: 'numeric', maxlength: 14, autocomplete: 'off', placeholder: 'Novo CPF (deixe em branco para manter)', 'aria-label': 'Novo CPF' });
+  novoCpf.addEventListener('input', () => { novoCpf.value = mascararCpf(novoCpf.value); });
+  const remover = completo && a.tem_cpf ? el('input', { type: 'checkbox', id: 'chk-remover-cpf', 'aria-label': 'Remover o CPF' }) : null;
+  if (remover) remover.addEventListener('change', () => { novoCpf.disabled = remover.checked; if (remover.checked) novoCpf.value = ''; });
+  const blocoCpf = el('div', { class: 'campo span-2 bloco-cpf' },
+    el('label', {}, 'CPF'),
+    el('p', { class: 'cpf-atual' }, 'CPF atual: ', a.tem_cpf ? el('strong', {}, a.cpf_mascarado) : el('span', { class: 'etiqueta ambar' }, 'sem CPF')),
+    novoCpf,
+    remover ? el('div', { class: 'linha-check' }, remover, el('label', { for: 'chk-remover-cpf' }, 'Remover o CPF desta pessoa (ela deixa de fazer check-in pelo CPF)')) : null,
+    el('p', { class: 'nota' }, a.checkins_ativos > 0
+      ? 'Esta pessoa já tem check-in: os registros anteriores continuam com o CPF da época. O novo CPF vale para os próximos.'
+      : 'O CPF é validado e não pode repetir o de outra pessoa.'));
+
+  const nome = campoTexto('nome_completo', 'Nome completo *', 'text', 200);
+  const corpo = completo
+    ? el('div', { class: 'grade-form' }, nome, blocoCpf,
+        el('div', { class: 'secao' }, 'Contato e lotação'), ...CAMPOS_TEXTO.map((c) => campoTexto(...c)),
+        el('div', { class: 'secao' }, 'Situação'), ...CAMPOS_SIMNAO.map((c) => campoSimNao(...c)))
+    : el('div', {}, el('p', { class: 'nota' }, 'Você pode corrigir o nome e o CPF. Os demais dados só o administrador altera.'), nome, blocoCpf);
+
+  let resultado = null;
+  const ok = await formulario({
+    titulo: `Editar — ${a.nome_completo}`, textoConfirmar: 'Salvar', largo: completo, corpo,
+    aoConfirmar: async () => {
+      const campos = {};
+      const n = normaliza(entradas.nome_completo.value);
+      if (n.length < 3) return 'Informe o nome completo.';
+      if (n !== normaliza(a.nome_completo)) campos.nome_completo = n;
+
+      if (remover && remover.checked) campos.cpf = null;
+      else if (novoCpf.value.trim() !== '') {
+        if (!cpfValido(novoCpf.value)) return 'CPF inválido. Confira os números.';
+        campos.cpf = somenteDigitos(novoCpf.value);
+      }
+      if (completo) {
+        for (const [k, rotulo, tipo] of CAMPOS_TEXTO) {
+          const v = normaliza(entradas[k].value);
+          if (v === normaliza(a[k])) continue;                 // só envia o que mudou
+          if (tipo === 'email' && v && !EMAIL_RE.test(v)) return `${rotulo}: informe um e-mail válido.`;
+          if (tipo === 'tel' && v && !/^[0-9+() -]{8,30}$/.test(v)) return `${rotulo}: use apenas números, espaços, parênteses, + e -.`;
+          campos[k] = v;                                       // vazio = limpar o campo
+        }
+        for (const [k] of CAMPOS_SIMNAO) {
+          const v = paraBool(entradas[k].value);
+          if (v !== (a[k] ?? null)) campos[k] = v;
+        }
+      }
+      if (!Object.keys(campos).length) { resultado = { status: 'sem_alteracoes' }; return null; }
+
+      const { data, error: e2 } = await sb.rpc('fn_admin_editar_participante', { p_participante_id: p.id, p_campos: campos });
+      if (e2) return mensagemErro(e2);
+      switch (data.status) {
+        case 'sucesso': case 'sem_alteracoes': resultado = data; return null;
+        case 'cpf_invalido': return 'CPF inválido. Confira os números.';
+        case 'cpf_existente': return `Este CPF já pertence a ${data.nome}. Não é possível usar o mesmo CPF para duas pessoas.`;
+        case 'dados_invalidos': return data.mensagem || 'Dados inválidos.';
+        case 'campo_nao_permitido': return 'Você não tem permissão para alterar este campo.';
+        case 'nao_encontrado': return 'Participante não encontrado. Atualize a página.';
+        default: return 'Não foi possível salvar as alterações.';
+      }
+    },
+  });
+  if (!ok || !resultado) return;
+  if (resultado.status === 'sem_alteracoes') aviso('Nenhuma alteração foi feita.', 'info');
+  else aviso(`Dados de ${resultado.nome} atualizados.`, 'ok');
+  if (completo) carregarFiltros().catch(() => {});             // secretaria/órgão/município podem ter mudado
+  carregar();
+}
+
 /* ------------------------------ Filtros (com cache) ------------------------------ */
 /** Preenche os três filtros preservando a escolha atual. Pode ser chamado de novo quando chega a versão atualizada. */
 function preencherFiltros(f) {
@@ -347,6 +478,10 @@ $('f-busca').addEventListener('input', debounce(recarregar, 350));
 $('anterior').addEventListener('click', () => { estado.offset = Math.max(0, estado.offset - TAMANHO); carregar(); });
 $('proxima').addEventListener('click', () => { estado.offset += TAMANHO; carregar(); });
 $('adicionar').addEventListener('click', adicionar);
+
+soIcone($('anterior'), 'esq', 'Página anterior');
+soIcone($('proxima'), 'dir', 'Próxima página');
+comIcone($('adicionar'), 'user-plus', 'Adicionar participante');
 
 montarCabecalho();
 $('corpo').append(el('tr', {}, el('td', { colspan: COLUNAS.length, class: 'vazio' }, 'Carregando participantes…')));

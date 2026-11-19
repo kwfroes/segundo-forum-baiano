@@ -4,6 +4,7 @@
  * Inclui os horários do check-in da manhã e da tarde (check-in duplo) e a inclusão manual.
  */
 import { iniciarPagina, aviso, confirmar } from './admin-shell.js';
+import { comIcone } from './icones.js';
 import { el, limpar, gerarCsv, baixarArquivo, formatarDataHora, seguroPlanilha, mensagemErro } from './utils.js';
 
 const $ = (id) => document.getElementById(id);
@@ -39,6 +40,9 @@ const TITULOS = {
 };
 
 let linhas = []; let tipoGerado = 'todos';
+
+comIcone($('r-csv'), 'baixar', 'Baixar CSV');
+comIcone($('r-xlsx'), 'baixar', 'Baixar Excel (.xlsx)');
 
 const { data: f } = await sb.rpc('fn_admin_filtros');
 (f?.secretarias || []).forEach((v) => $('r-secretaria').append(el('option', { value: v }, v)));

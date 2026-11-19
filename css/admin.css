@@ -146,3 +146,39 @@ body.admin > #topo {
 
 /* Lista carregando: esmaece em vez de ficar parada sem sinal de atividade. */
 .tabela-rolavel[aria-busy="true"] { opacity: .55; transition: opacity .15s; }
+
+/* =====================================================================
+   Botões só com ícone, selos e texto longo em tabelas (acrescentado)
+   ===================================================================== */
+.btn-icone { display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; padding: 0; min-height: 0;
+  border-radius: 8px; border: 1.5px solid var(--borda); background: #fff; color: var(--azul-profundo); cursor: pointer; }
+.btn-icone:hover { background: var(--fundo-2); }
+.btn-icone.perigo { color: var(--vermelho); }
+.btn-icone.perigo:hover { background: #FBE3E4; border-color: #F3B7BA; }
+.btn-icone.mini { width: 26px; height: 26px; border-radius: 50%; }
+.btn-icone.grande { width: 42px; height: 42px; }
+.btn-icone:disabled { opacity: .45; cursor: not-allowed; }
+.btn-icone:disabled:hover { background: #fff; }
+.btn-icone svg { display: block; }
+.bloqueado { display: inline-flex; cursor: not-allowed; }
+.btn.com-icone { gap: 8px; }
+.btn svg { flex: none; }
+
+/* Selos redondos com ícone (substituem etiquetas de texto nas tabelas) */
+.etiqueta-ico { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; vertical-align: middle; }
+td.nome > .etiqueta-ico { margin-left: 8px; }
+.etiqueta-ico.verde { background: #E1F4E9; color: #17633D; }
+.etiqueta-ico.ambar { background: #FFF1D3; color: #7A5206; }
+.etiqueta-ico.incl { background: #EDE4F7; color: #4B2A7A; }
+.etiqueta-ico.prot { background: #DCEEFB; color: #0B5C97; }
+
+/* Textos longos em UMA linha, com reticências (o texto completo vai no title). O nome nunca é cortado. */
+.trunca { display: block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trunca.curta { max-width: 130px; }
+.trunca.media { max-width: 180px; }
+.trunca.longa { max-width: 260px; }
+
+/* Coluna de ações: ícones lado a lado, sem quebrar linha */
+.tabela-acoes td.col-acoes { min-width: 0; }
+.acoes-tabela { flex-wrap: nowrap; align-items: center; }
+.senha-linha { align-items: center; }

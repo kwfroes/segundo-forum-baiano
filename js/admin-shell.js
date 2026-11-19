@@ -13,6 +13,7 @@
  *  • A biblioteca do Supabase é carregada sob demanda (import dinâmico), em paralelo.
  */
 import { el, limpar } from './utils.js';
+import { botaoIcone } from './icones.js';
 
 const INATIVIDADE_MS = 30 * 60 * 1000;      // logout automático após 30 min sem uso
 const CHAVE_SESSAO = 'forum-checkin-admin';  // mesma storageKey usada em supabase.js (clienteAdmin)
@@ -81,15 +82,15 @@ function montarTopo(perfil) {
   const nav = el('nav', { 'aria-label': 'Principal' },
     PAGINAS.filter((p) => !p.admin || perfil.perfil === 'administrador')
       .map((p) => el('a', { href: p.href, 'aria-current': p.href === paginaAtual ? 'page' : null }, p.rotulo)));
-  const sair = el('button', {
-    class: 'btn sec pequeno', type: 'button',
+  const sair = botaoIcone({
+    icone: 'sair', titulo: 'Sair', tam: 18,
     onclick: async () => {
       limparCachePerfil();
       const { clienteAdmin } = await supabasePronto;
       await clienteAdmin().auth.signOut();
       location.replace('index.html');
     },
-  }, 'Sair');
+  });
   topo.append(
     nav,
     el('div', { class: 'usuario' }, el('span', {}, el('strong', {}, perfil.nome), ' · ', perfil.perfil === 'administrador' ? 'Administrador' : 'Operador'), sair),

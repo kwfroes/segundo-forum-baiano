@@ -54,3 +54,14 @@ input[type="tel"]:focus, input[type="time"]:focus { outline: none; border-color:
 .dlg-form .dup label { display: flex; gap: 8px; align-items: center; margin: 8px 0 0; font-weight: 700; }
 .dlg-form .dup input[type="checkbox"] { width: auto; min-height: 0; }
 .dlg-form small.obrig { color: var(--vermelho); }
+
+/* ---------- Editar participante ---------- */
+.grade-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.grade-form .span-2 { grid-column: 1 / -1; }
+.grade-form .secao { grid-column: 1 / -1; margin: 6px 0 10px; padding-top: 10px; border-top: 1px dashed var(--borda);
+  font-weight: 800; color: var(--azul-profundo); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+.bloco-cpf { background: var(--fundo-2); border: 1px solid var(--borda); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+.bloco-cpf .cpf-atual { margin: 0 0 8px; }
+.bloco-cpf .nota { margin: 6px 0 0; }
+.dlg-form .grade-form .campo { margin-bottom: 12px; }
+@media (max-width: 640px) { .grade-form { grid-template-columns: 1fr; } }
