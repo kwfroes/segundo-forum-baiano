@@ -20,13 +20,22 @@ const CHAVE_SESSAO = 'forum-checkin-admin';  // mesma storageKey usada em supaba
 const CHAVE_PERFIL = 'forum-checkin-perfil'; // cache só da aparência do menu
 const VALIDADE_PERFIL_MS = 10 * 60 * 1000;
 
+// USUÁRIO MASTER: quem tem  app_metadata.master = true  no login (Supabase) vê as páginas marcadas com "master: true"
+// (hoje, só "Importar base"). É só uma regra de TELA: a página some do menu e quem abrir o endereço direto é levado ao
+// Dashboard. A proteção real continua no banco, que só libera as funções a administradores.
+// O "app_metadata" só pode ser alterado pelo servidor/SQL Editor (o próprio usuário NÃO consegue), por isso serve para
+// isso; nenhum e-mail fica escrito neste arquivo. Dar/tirar o acesso: SQL Editor do Supabase (veja o LEIA-ME da entrega).
+
 const PAGINAS = [
   { href: 'dashboard.html',     rotulo: 'Dashboard',     admin: false },
   { href: 'participantes.html', rotulo: 'Participantes', admin: false },
   { href: 'relatorios.html',    rotulo: 'Relatórios',    admin: true  },
-  { href: 'importar.html',      rotulo: 'Importar base', admin: true },
+  { href: 'importar.html',      rotulo: 'Importar base', admin: true, master: true },
   { href: 'usuarios.html',      rotulo: 'Usuários',      admin: true  },
 ];
+
+/** O login (objeto "user" da sessão) é MASTER? Só vale o booleano true em app_metadata; texto como "true" não vale. */
+const ehMaster = (user) => user?.app_metadata?.master === true;
 
 // Começa a baixar a biblioteca já, sem travar a montagem da barra.
 const supabasePronto = import('./supabase.js');
@@ -93,7 +102,7 @@ function montarTopo(perfil) {
   garantirMarca(topo);
   topo.querySelectorAll('nav, .usuario').forEach((n) => n.remove());   // troca só o menu e o usuário; a marca fica
   const nav = el('nav', { 'aria-label': 'Principal' },
-    PAGINAS.filter((p) => !p.admin || perfil.perfil === 'administrador')
+    PAGINAS.filter((p) => (!p.admin || perfil.perfil === 'administrador') && (!p.master || ehMaster(sessaoLocal()?.user)))
       .map((p) => el('a', { href: p.href, 'aria-current': p.href === paginaAtual ? 'page' : null }, p.rotulo)));
   const sair = botaoIcone({
     icone: 'sair', titulo: 'Sair', tam: 18,
@@ -147,6 +156,8 @@ export async function iniciarPagina({ requer = 'staff' } = {}) {
   // Primeiro acesso / senha redefinida por um administrador: exige trocar a senha antes de usar o painel.
   if (session.user?.user_metadata?.trocar_senha === true) { limparCachePerfil(); return redirecionar('index.html?erro=trocar_senha'); }
   const uid = session.user.id;
+  // Página reservada ao MASTER (ex.: Importar base): quem não for master vai para o Dashboard, com o aviso de permissão.
+  if (PAGINAS.some((p) => p.master && p.href === paginaAtual) && !ehMaster(session.user)) return redirecionar('dashboard.html?erro=permissao');
 
   let perfil = null;
   const cache = lerCachePerfil();
