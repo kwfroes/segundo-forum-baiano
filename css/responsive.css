@@ -166,3 +166,20 @@
   /* a barra não fica fixa: sobraria pouca tela para o conteúdo */
   body.admin > #topo { position: static; min-height: 0; }
 }
+
+/* =====================================================================
+   Seta da arte do evento na barra superior (acrescentado ao FINAL do responsive.css)
+   ===================================================================== */
+.topo-admin .marca { display: flex; align-items: center; gap: 10px; }
+.topo-admin .marca-logo { display: block; flex: none; width: 24px; height: 36px; }
+.topo-admin .marca-texto { display: block; line-height: 1.1; }
+
+/* Notebook pequeno / tablet deitado (961 a 1180 px): a seta tira ~34 px da barra; o nome do usuário cede esse espaço. */
+@media (min-width: 961px) and (max-width: 1180px) {
+  body.admin .topo-admin .marca { gap: 8px; }
+  body.admin .topo-admin .usuario > span { max-width: 195px; }
+}
+@media (min-width: 961px) and (max-width: 1010px) {
+  body.admin .topo-admin .usuario > span { max-width: 150px; }
+}
+

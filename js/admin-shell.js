@@ -78,8 +78,13 @@ function centralizarAtual(nav) {
 /** Nome do evento: texto fixo, pode aparecer antes de se saber quem é o usuário. */
 function garantirMarca(topo) {
   topo.className = 'topo-admin';
-  if (!topo.querySelector('.marca')) topo.prepend(el('div', { class: 'marca' }, '2º Fórum Baiano', el('small', {}, 'Credenciamento')));
+  if (!topo.querySelector('.marca')) {
+    topo.prepend(el('div', { class: 'marca' },
+      el('img', { class: 'marca-logo', src: new URL('../assets/marca/seta.svg', import.meta.url).href, alt: '', width: 24, height: 36 }),
+      el('span', { class: 'marca-texto' }, '2º Fórum Baiano', el('small', {}, 'Credenciamento'))));
+  }
 }
+
 
 function montarTopo(perfil) {
   const topo = document.getElementById('topo');
