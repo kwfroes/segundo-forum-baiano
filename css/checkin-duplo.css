@@ -71,3 +71,22 @@ input[type="tel"]:focus, input[type="time"]:focus { outline: none; border-color:
 .fechar-resultado { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; padding: 0;
   border: 2px solid var(--borda); border-radius: 50%; background: var(--fundo-2); color: var(--azul-profundo); cursor: pointer; }
 .fechar-resultado:hover { background: #E7F0F7; }
+
+/* ---------- Dashboard: card "Participantes (Análise SRL = SIM)" ---------- */
+.indicador.participantes-sim { border-top-color: var(--azul-profundo); }
+.indicador.participantes-sim .sub { color: var(--texto-suave); font-size: .85rem; margin-top: 2px; }
+/* a grade tem 6 colunas: no notebook o 7º card ocupa 2 colunas (uma linha só dele); no tablet/celular, a linha inteira */
+@media (min-width: 961px) { .grade-indicadores > .indicador.participantes-sim { grid-column: span 2; } }
+@media (max-width: 960px) { .grade-indicadores > .indicador.participantes-sim { grid-column: 1 / -1; } }
+@media (min-width: 961px) {
+  .grade-indicadores { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .grade-indicadores > .indicador.participantes-sim { grid-column: auto; }
+}
+/* 961 a 1180 px (notebook pequeno / tablet deitado): cards um pouco mais compactos para os 7 caberem sem rolagem lateral */
+@media (min-width: 961px) and (max-width: 1180px) {
+  .grade-indicadores { gap: 10px; }
+  .grade-indicadores > .indicador { padding: 12px; }
+  .grade-indicadores > .indicador .rotulo { font-size: .72rem; letter-spacing: .02em; overflow-wrap: anywhere; }
+  .grade-indicadores > .indicador .valor { font-size: 1.6rem; }
+}
+

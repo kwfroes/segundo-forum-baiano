@@ -141,10 +141,17 @@ let ocupado = false;
 async function carregar() {
   if (ocupado || document.hidden) return;
   ocupado = true;
-  const { data, error } = await sb.rpc('fn_admin_dashboard', { p_intervalo_min: Number($('intervalo').value) });
+  const [principal, sim] = await Promise.all([
+    sb.rpc('fn_admin_dashboard', { p_intervalo_min: Number($('intervalo').value) }),
+    // Card "Participantes (SIM)": se a função ainda não existir no banco (migração 15), o card fica em "–" e o resto do painel segue normal.
+    Promise.resolve(sb.rpc('fn_admin_participantes_sim')).then((r) => r, () => ({ data: null, error: true })),
+  ]);
   ocupado = false;
+  const { data, error } = principal;
   if (error) { aviso(mensagemErro(error), 'erro'); return; }
   preencher(data);
+  const n = Number(sim?.data?.total);
+  $('ind-sim').textContent = !sim?.error && sim?.data && Number.isFinite(n) ? fmtNum.format(n) : '–';
 }
 
 $('intervalo').addEventListener('change', carregar);

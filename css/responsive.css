@@ -183,3 +183,15 @@
   body.admin .topo-admin .usuario > span { max-width: 150px; }
 }
 
+/* =====================================================================
+   Barra superior com 6 itens de menu (só o usuário master vê "Importar base" e "Logs") — acrescentado ao final
+   O admin-shell.js põe a classe "menu-largo" no cabeçalho quando o menu tem 6 itens ou mais. Quem tem 4 itens não é afetado.
+   Logo acima de 1180 px as regras de barra compacta (acima) deixam de valer e os 6 itens ainda não cabiam: aqui a barra
+   se compacta mais um pouco, só nessa faixa (a partir de 1241 px cabe sem ajuste).
+   ===================================================================== */
+@media (min-width: 1181px) and (max-width: 1240px) {
+  body.admin .topo-admin.menu-largo { gap: 12px; padding-left: 16px; padding-right: 16px; }
+  body.admin .topo-admin.menu-largo nav a { padding: 8px 10px; }
+  body.admin .topo-admin.menu-largo .usuario { min-width: 0; }
+  body.admin .topo-admin.menu-largo .usuario > span { max-width: 230px; overflow: hidden; text-overflow: ellipsis; }
+}

@@ -21,7 +21,7 @@ const CHAVE_PERFIL = 'forum-checkin-perfil'; // cache só da aparência do menu
 const VALIDADE_PERFIL_MS = 10 * 60 * 1000;
 
 // USUÁRIO MASTER: quem tem  app_metadata.master = true  no login (Supabase) vê as páginas marcadas com "master: true"
-// (hoje, só "Importar base"). É só uma regra de TELA: a página some do menu e quem abrir o endereço direto é levado ao
+// (hoje, "Importar base" e "Logs"). É só uma regra de TELA: a página some do menu e quem abrir o endereço direto é levado ao
 // Dashboard. A proteção real continua no banco, que só libera as funções a administradores.
 // O "app_metadata" só pode ser alterado pelo servidor/SQL Editor (o próprio usuário NÃO consegue), por isso serve para
 // isso; nenhum e-mail fica escrito neste arquivo. Dar/tirar o acesso: SQL Editor do Supabase (veja o LEIA-ME da entrega).
@@ -32,6 +32,7 @@ const PAGINAS = [
   { href: 'relatorios.html',    rotulo: 'Relatórios',    admin: true  },
   { href: 'importar.html',      rotulo: 'Importar base', admin: true, master: true },
   { href: 'usuarios.html',      rotulo: 'Usuários',      admin: true  },
+  { href: 'logs.html',          rotulo: 'Logs',          admin: true, master: true },
 ];
 
 /** O login (objeto "user" da sessão) é MASTER? Só vale o booleano true em app_metadata; texto como "true" não vale. */
@@ -118,6 +119,7 @@ function montarTopo(perfil) {
     el('div', { class: 'usuario' }, el('span', {}, el('strong', {}, perfil.nome), ' · ', perfil.perfil === 'administrador' ? 'Administrador' : 'Operador'), sair),
   );
   pintado = { nome: perfil.nome, perfil: perfil.perfil };
+  topo.classList.toggle('menu-largo', nav.querySelectorAll('a').length >= 6);   // 6 itens (master): a barra ganha o ajuste de espaço do responsive.css
   centralizarAtual(nav);
 }
 
