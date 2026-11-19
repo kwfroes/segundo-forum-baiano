@@ -1,0 +1,23 @@
+/* logs.css — página de Logs (admin/logs.html). Carregado só nela, depois dos demais estilos. */
+
+/* ---------- Filtros: 5 campos na mesma linha em notebook; 2 colunas no tablet; 1 no celular ---------- */
+.filtros-logs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.6fr); gap: 12px; align-items: end; margin-bottom: 14px; }
+.filtros-logs input[type="date"] {
+  width: 100%; padding: 10px 12px; font: 1rem var(--fonte); color: var(--texto); background: #fff;
+  border: 1.5px solid var(--borda); border-radius: 10px; min-height: 42px;
+}
+.filtros-logs input[type="date"]:focus { outline: none; border-color: var(--azul-vivo); box-shadow: 0 0 0 3px rgba(21, 152, 229, .2); }
+@media (max-width: 960px) { .filtros-logs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filtros-logs > div:last-child { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .filtros-logs { grid-template-columns: 1fr 1fr; gap: 10px; } }
+@media (pointer: coarse) { body.admin .filtros-logs input[type="date"] { min-height: 44px; } }
+
+/* ---------- Tabela ---------- */
+.log-resumo { display: block; max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.admin table.dados td.mono { white-space: nowrap; }
+
+/* ---------- Diálogo de detalhes ---------- */
+.log-detalhe dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0 0 14px; }
+.log-detalhe dt { font-weight: 700; color: var(--azul-profundo); }
+.log-detalhe dd { margin: 0; overflow-wrap: anywhere; }
+.log-detalhe h3 { font-size: .95rem; margin: 14px 0 8px; padding-top: 12px; border-top: 1px dashed var(--borda); }
+@media (max-width: 560px) { .log-detalhe dl { grid-template-columns: 1fr; gap: 2px; } .log-detalhe dd { margin-bottom: 8px; } }

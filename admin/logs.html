@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://cdn.jsdelivr.net https://cdn.sheetjs.com; style-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://cdn.sheetjs.com; form-action 'self'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Logs — Credenciamento 2º Fórum Baiano</title>
+  <link rel="icon" href="../assets/favicon/favicon.ico" sizes="32x32">
+  <link rel="icon" href="../assets/favicon/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/favicon/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/logs.css">
+</head>
+<body class="admin">
+  <header id="topo"></header>
+  <main class="conteudo-admin">
+    <div class="barra-topo"><h1>Logs</h1></div>
+    <p class="nota">Registro do que a equipe faz no sistema: quem, quando e o quê. Somente leitura — os registros não podem ser alterados nem apagados. Visível apenas para o usuário master.</p>
+    <form id="filtros" class="filtros-logs formulario-admin" novalidate>
+      <div><label for="f-de">De</label><input id="f-de" type="date"></div>
+      <div><label for="f-ate">Até</label><input id="f-ate" type="date"></div>
+      <div><label for="f-acao">Ação</label><select id="f-acao"><option value="">Todas</option></select></div>
+      <div><label for="f-usuario">Usuário</label><select id="f-usuario"><option value="">Todos</option></select></div>
+      <div><label for="f-busca">Buscar no texto</label><input id="f-busca" type="search" autocomplete="off" placeholder="Nome, ação ou trecho do registro"></div>
+    </form>
+    <div class="tabela-rolavel">
+      <table class="dados" id="tabela">
+        <caption class="sr-only">Registros da trilha de auditoria, do mais recente para o mais antigo</caption>
+        <thead><tr><th scope="col">Data e hora</th><th scope="col">Usuário</th><th scope="col">Ação</th><th scope="col">Resumo</th><th scope="col">Detalhes</th></tr></thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+    <div class="paginacao">
+      <span id="contagem" role="status"></span>
+      <span>
+        <button id="anterior" class="btn sec pequeno" type="button">Anterior</button>
+        <span id="pagina"></span>
+        <button id="proxima" class="btn sec pequeno" type="button">Próxima</button>
+      </span>
+    </div>
+  </main>
+  <script type="module" src="../js/logs.js"></script>
+</body>
+</html>
