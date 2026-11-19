@@ -1,0 +1,39 @@
+/* equipe.css — tela de PARTICIPANTES: destaque da EQUIPE DO EVENTO (palestrantes/painelistas, convidados,
+   estandistas e produção), filtro "Equipe", legenda, CPF completo e download de CSV.
+   Carregado só em admin/participantes.html, depois dos demais estilos. Nada aqui altera as outras telas. */
+
+/* ---------- Linhas da equipe: fundo azul-petróleo bem claro e uma faixa na borda esquerda ---------- */
+body.admin table.dados tbody tr.equipe td { background: #EAF7F5; border-bottom-color: #CFE9E4; }
+body.admin table.dados tbody tr.equipe:hover td { background: #DDF1EE; }
+body.admin table.dados tbody tr.equipe td:first-child { box-shadow: inset 5px 0 0 #138A7C; }
+
+/* A 1ª coluna fica fixa em tablet/celular (responsive.css) e tem fundo próprio: mantém o destaque nela também. */
+body.admin .tabela-rolavel > table.dados tbody tr.equipe td:first-child { background: #EAF7F5; box-shadow: inset 5px 0 0 #138A7C, 1px 0 0 var(--borda); }
+body.admin .tabela-rolavel > table.dados tbody tr.equipe:hover td:first-child { background: #DDF1EE; }
+
+/* ---------- Etiqueta com a categoria, ao lado do nome ---------- */
+.etiqueta.equipe { background: #CDEDE7; color: #0B5E52; font-weight: 800; margin-left: 8px; vertical-align: middle; }
+
+/* ---------- Legenda: fica ENTRE a tabela e a contagem de participantes ---------- */
+.legenda-equipe { margin: 10px 0 0; font-size: .86rem; line-height: 1.5; color: var(--texto-suave); }
+.legenda-equipe strong { color: #0B5E52; }
+.amostra-equipe { display: inline-block; vertical-align: -2px; width: 22px; height: 14px; margin-right: 8px; border-radius: 4px; background: #EAF7F5; border: 1px solid #CFE9E4; box-shadow: inset 5px 0 0 #138A7C; }
+
+/* ---------- 7º filtro (Equipe) cabe na mesma linha dos outros em notebook e desktop ---------- */
+@media (min-width: 961px) {
+  body.admin .filtros { grid-template-columns: 2fr repeat(6, minmax(0, 1fr)); }
+}
+
+/* ---------- CPF completo: o botão fica em alerta enquanto os CPFs estão à mostra ---------- */
+#cpf-toggle[aria-pressed="true"] { background: #FFF1D3; border-color: var(--alerta); color: #7A5206; }
+#cpf-toggle[aria-pressed="true"]:hover { background: #FFE8B8; }
+body.admin table.dados td.cpf[data-revelado] { color: #7A5206; font-weight: 700; }
+
+/* ---------- Diálogo "Baixar CSV" ---------- */
+.dlg-form .opcao-csv { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; margin: 0 0 10px; border: 1.5px solid var(--borda); border-radius: 12px; cursor: pointer; font-weight: 400; }
+.dlg-form .opcao-csv:hover { background: var(--fundo-2); }
+.dlg-form .opcao-csv input { width: auto; min-height: 0; margin-top: 4px; flex: none; }
+.dlg-form .opcao-csv strong { display: block; color: var(--azul-profundo); }
+.dlg-form .opcao-csv small { display: block; color: var(--texto-suave); font-size: .86rem; line-height: 1.4; }
+.dlg-form .opcao-cpf { background: #FFF7E5; border-color: #F0D49A; }
+.dlg-form .opcao-cpf:hover { background: #FFF1D3; }
