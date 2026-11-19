@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
   <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/checkin-duplo.css">
 </head>
 <body class="admin">
   <header id="topo"></header>
@@ -22,8 +23,11 @@
           <select id="r-tipo">
             <option value="todos">Todos os inscritos</option>
             <option value="confirmados">Inscrições confirmadas</option>
-            <option value="presentes">Participantes presentes</option>
-            <option value="ausentes">Participantes ausentes (confirmados sem check-in)</option>
+            <option value="presentes">Participantes presentes (ao menos 1 check-in)</option>
+            <option value="presentes_manha">Presentes na manhã (check-in duplo)</option>
+            <option value="presentes_tarde">Presentes na tarde (check-in duplo)</option>
+            <option value="presentes_ambos">Presentes nos dois períodos (check-in duplo)</option>
+            <option value="ausentes">Ausentes (confirmados sem nenhum check-in)</option>
             <option value="secretaria">Participantes por secretaria</option>
             <option value="orgao">Participantes por órgão/unidade</option>
           </select></div>

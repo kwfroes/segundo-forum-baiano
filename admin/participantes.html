@@ -10,11 +10,16 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
   <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/checkin-duplo.css">
 </head>
 <body class="admin">
   <header id="topo"></header>
   <main class="conteudo-admin">
-    <h1>Participantes</h1>
+    <div class="barra-topo">
+      <h1>Participantes</h1>
+      <div class="grupo"><button id="adicionar" class="btn" type="button">+ Adicionar participante</button></div>
+    </div>
+    <p id="faixa-periodo" class="aviso-periodo" role="status" hidden></p>
     <form id="filtros" class="filtros formulario-admin" novalidate>
       <div><label for="f-busca">Buscar por nome, CPF ou matrícula</label><input id="f-busca" type="search" autocomplete="off" placeholder="Nome, CPF ou matrícula"></div>
       <div><label for="f-secretaria">Secretaria</label><select id="f-secretaria"><option value="">Todas</option></select></div>

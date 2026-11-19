@@ -1,6 +1,7 @@
 /**
  * relatorios.js — RF010: exportação em CSV e Excel (somente administrador).
  * O CPF é mascarado por padrão; o CPF completo exige confirmação e fica na auditoria.
+ * Inclui os horários do check-in da manhã e da tarde (check-in duplo) e a inclusão manual.
  */
 import { iniciarPagina, aviso, confirmar } from './admin-shell.js';
 import { el, limpar, gerarCsv, baixarArquivo, formatarDataHora, seguroPlanilha, mensagemErro } from './utils.js';
@@ -22,14 +23,18 @@ const COLUNAS = [
   { titulo: 'Área de atuação', valor: (r) => r.area_atuacao ?? '' },
   { titulo: 'Tipo de inscrição', valor: (r) => r.tipo_inscricao ?? '' },
   { titulo: 'Análise SRL/SAEB', valor: (r) => r.analise_srl_saeb ?? '' },
+  { titulo: 'Justificativa da inclusão manual', valor: (r) => r.justificativa_inclusao ?? '' },
   { titulo: 'Inscrição confirmada', valor: (r) => sim(r.inscricao_confirmada) },
-  { titulo: 'Presente', valor: (r) => sim(r.presente) },
-  { titulo: 'Data/hora do check-in', valor: (r) => formatarDataHora(r.checkin_data_hora) },
-  { titulo: 'Origem do check-in', valor: (r) => (r.checkin_metodo === 'publico' ? 'Credenciamento público' : r.checkin_metodo === 'administrativo' ? 'Administrativo' : '') },
+  { titulo: 'Presente (ao menos 1 check-in)', valor: (r) => sim(r.presente) },
+  { titulo: 'Check-in da manhã', valor: (r) => formatarDataHora(r.checkin_manha) },
+  { titulo: 'Check-in da tarde', valor: (r) => formatarDataHora(r.checkin_tarde) },
+  { titulo: 'Check-in (período único)', valor: (r) => formatarDataHora(r.checkin_unico) },
+  { titulo: 'Origem do primeiro check-in', valor: (r) => (r.checkin_metodo === 'publico' ? 'Credenciamento público' : r.checkin_metodo === 'administrativo' ? 'Administrativo' : '') },
 ];
 
 const TITULOS = {
   todos: 'Todos os inscritos', confirmados: 'Inscrições confirmadas', presentes: 'Participantes presentes',
+  presentes_manha: 'Presentes na manhã', presentes_tarde: 'Presentes na tarde', presentes_ambos: 'Presentes nos dois períodos',
   ausentes: 'Participantes ausentes', secretaria: 'Participantes por secretaria', orgao: 'Participantes por órgão/unidade',
 };
 
@@ -83,7 +88,6 @@ $('r-csv').addEventListener('click', () => {
 $('r-xlsx').addEventListener('click', async () => {
   const btn = $('r-xlsx'); btn.disabled = true;
   try {
-    // Biblioteca carregada sob demanda a partir do CDN oficial do SheetJS
     const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs');
     const aoa = [COLUNAS.map((c) => c.titulo), ...linhas.map((r) => COLUNAS.map((c) => seguroPlanilha(c.valor(r))))];
     const ws = XLSX.utils.aoa_to_sheet(aoa);

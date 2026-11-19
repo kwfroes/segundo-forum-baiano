@@ -1,0 +1,56 @@
+/* checkin-duplo.css — check-in duplo, inclusão de participante e ajustes do painel.
+   Depende das variáveis de style.css. Carregado depois de admin.css. */
+
+/* ---------- Campos que o admin.css não estiliza (celular e horário) ---------- */
+input[type="tel"], input[type="time"] {
+  width: 100%; padding: 10px 12px; font: 1rem var(--fonte); color: var(--texto); background: #fff;
+  border: 1.5px solid var(--borda); border-radius: 10px; min-height: 42px;
+}
+input[type="tel"]:focus, input[type="time"]:focus { outline: none; border-color: var(--azul-vivo); box-shadow: 0 0 0 3px rgba(21, 152, 229, .2); }
+
+/* ---------- Tela pública: faixa do período ---------- */
+.aviso-periodo { margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; font-weight: 700; font-size: 1.05rem;
+  background: #E9F4FC; color: #0B5C97; border: 1px solid #B3D8F0; }
+.aviso-periodo.intervalo { background: #FFF7E5; color: #6B4A06; border-color: var(--alerta); }
+
+/* ---------- Dashboard ---------- */
+.legenda .l-tarde::before { background: var(--sucesso); }
+.painel-duplo { margin-top: 16px; }
+.painel-duplo .cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.painel-duplo .cab h2 { margin: 0; }
+.selo-periodo { display: inline-block; padding: 4px 14px; border-radius: 999px; font-weight: 800; font-size: .85rem; background: #E8EEF3; color: #4A5F73; }
+.selo-periodo.manha { background: #DCEEFB; color: #0B5C97; }
+.selo-periodo.tarde { background: #E1F4E9; color: #17633D; }
+.selo-periodo.intervalo { background: #FFF1D3; color: #7A5206; }
+.grade-duplo { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.grade-duplo .indicador .valor { font-size: 1.8rem; }
+.grade-duplo .indicador .sub { color: var(--texto-suave); font-size: .85rem; margin-top: 2px; }
+.indicador.manha { border-top-color: var(--azul-vivo); }
+.indicador.tarde { border-top-color: var(--sucesso); }
+.nota-duplo { margin: 12px 0 0; }
+.cfg-duplo { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--borda); }
+.cfg-duplo > div { min-width: 170px; }
+.cfg-duplo input[type="time"] { width: auto; min-width: 130px; }
+.cfg-duplo input:disabled { background: var(--fundo-2); color: var(--texto-suave); }
+
+/* ---------- Participantes: check-in por período ---------- */
+.periodo-linha { display: flex; align-items: center; gap: 6px; margin: 3px 0; white-space: nowrap; }
+.periodo-linha .rot { font-size: .78rem; font-weight: 700; color: var(--texto-suave); min-width: 44px; }
+.etiqueta.azul { background: #DCEEFB; color: #0B5C97; }
+.btn-x { all: unset; cursor: pointer; width: 22px; height: 22px; border-radius: 50%; text-align: center; line-height: 22px;
+  font-weight: 800; color: var(--vermelho); background: #FBE3E4; }
+.btn-x:hover { background: var(--vermelho); color: #fff; }
+.btn-x:focus-visible { outline: 3px solid var(--azul-vivo); outline-offset: 1px; }
+.btn.mini { padding: 2px 10px; min-height: 26px; font-size: .78rem; }
+.etiqueta.incluido { background: #EDE4F7; color: #4B2A7A; }
+.barra-topo .grupo { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Diálogo: incluir participante ---------- */
+.dlg-form .linha-check { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.dlg-form .linha-check input[type="checkbox"] { width: auto; min-height: 0; }
+.dlg-form .linha-check label { margin: 0; }
+.dlg-form .dup { background: #FFF7E5; border: 1px solid var(--alerta); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+.dlg-form .dup ul { margin: 6px 0; padding-left: 18px; }
+.dlg-form .dup label { display: flex; gap: 8px; align-items: center; margin: 8px 0 0; font-weight: 700; }
+.dlg-form .dup input[type="checkbox"] { width: auto; min-height: 0; }
+.dlg-form small.obrig { color: var(--vermelho); }

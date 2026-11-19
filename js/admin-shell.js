@@ -2,11 +2,22 @@
  * admin-shell.js — proteção de páginas, navegação, diálogos e avisos do painel.
  * A autorização real é feita pelo banco (RLS + validação de perfil nas funções).
  * Este arquivo apenas controla a experiência: redireciona quem não tem acesso.
+ *
+ * DESEMPENHO DA NAVEGAÇÃO
+ *  • Cada item do menu é uma página HTML separada. Para o menu não "piscar" a cada clique, o perfil
+ *    (nome e tipo de acesso) fica num cache da aba (sessionStorage) e a barra é desenhada NO INSTANTE
+ *    em que este arquivo carrega — antes de baixar a biblioteca do Supabase e antes de qualquer consulta.
+ *  • O cache serve só para a aparência. A confirmação do perfil continua sendo feita no banco, em
+ *    segundo plano, a cada página; se o acesso foi retirado, a pessoa é desconectada. Nenhuma ação
+ *    depende do cache: o banco valida o perfil dentro de cada função.
+ *  • A biblioteca do Supabase é carregada sob demanda (import dinâmico), em paralelo.
  */
-import { clienteAdmin } from './supabase.js';
 import { el, limpar } from './utils.js';
 
-const INATIVIDADE_MS = 30 * 60 * 1000;   // logout automático após 30 min sem uso
+const INATIVIDADE_MS = 30 * 60 * 1000;      // logout automático após 30 min sem uso
+const CHAVE_SESSAO = 'forum-checkin-admin';  // mesma storageKey usada em supabase.js (clienteAdmin)
+const CHAVE_PERFIL = 'forum-checkin-perfil'; // cache só da aparência do menu
+const VALIDADE_PERFIL_MS = 10 * 60 * 1000;
 
 const PAGINAS = [
   { href: 'dashboard.html',     rotulo: 'Dashboard',     admin: false },
@@ -16,55 +27,160 @@ const PAGINAS = [
   { href: 'usuarios.html',      rotulo: 'Usuários',      admin: true  },
 ];
 
-/** Verifica sessão e perfil. Redireciona para o login quando necessário. */
-export async function iniciarPagina({ requer = 'staff', pagina } = {}) {
-  const sb = clienteAdmin();
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { location.replace('index.html'); return new Promise(() => {}); }
-  // Primeiro acesso / senha redefinida por um administrador: exige trocar a senha antes de usar o painel.
-  if (session.user?.user_metadata?.trocar_senha === true) { location.replace('index.html?erro=trocar_senha'); return new Promise(() => {}); }
+// Começa a baixar a biblioteca já, sem travar a montagem da barra.
+const supabasePronto = import('./supabase.js');
+supabasePronto.catch(() => {});             // o erro, se houver, aparece quando a página aguardar a biblioteca
 
-  const { data: perfil, error } = await sb.rpc('fn_meu_perfil');
-  if (error || !perfil) {
-    await sb.auth.signOut();
-    location.replace('index.html?erro=sem_acesso');
-    return new Promise(() => {});
-  }
-  if (requer === 'admin' && perfil.perfil !== 'administrador') {
-    location.replace('dashboard.html?erro=permissao');
-    return new Promise(() => {});
-  }
-
-  montarTopo(sb, perfil, pagina);
-  document.querySelectorAll('.so-admin').forEach((n) => { n.hidden = perfil.perfil !== 'administrador'; });
-  iniciarInatividade(sb);
-
-  // sessão expirada/encerrada em outra aba
-  sb.auth.onAuthStateChange((evento) => { if (evento === 'SIGNED_OUT') location.replace('index.html'); });
-  return { sb, perfil, ehAdmin: perfil.perfil === 'administrador' };
+/* ----------------------- Cache do perfil (somente aparência) ----------------------- */
+function sessaoLocal() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem(CHAVE_SESSAO) || 'null');
+    return s && s.user && s.user.id ? s : null;
+  } catch { return null; }
 }
 
-function montarTopo(sb, perfil, pagina) {
+/** Perfil guardado, se for da MESMA pessoa logada, recente e sem troca de senha pendente. */
+function lerCachePerfil() {
+  const s = sessaoLocal();
+  if (!s || s.user.user_metadata?.trocar_senha === true) return null;
+  try {
+    const c = JSON.parse(sessionStorage.getItem(CHAVE_PERFIL) || 'null');
+    if (c && c.uid === s.user.id && typeof c.nome === 'string'
+        && (c.perfil === 'administrador' || c.perfil === 'operador')
+        && Date.now() - c.t < VALIDADE_PERFIL_MS) return c;
+  } catch { /* cache inválido: ignora */ }
+  return null;
+}
+function gravarCachePerfil(uid, perfil) {
+  try { sessionStorage.setItem(CHAVE_PERFIL, JSON.stringify({ uid, nome: perfil.nome, perfil: perfil.perfil, t: Date.now() })); } catch { /* sem cache */ }
+}
+function limparCachePerfil() {
+  try { sessionStorage.removeItem(CHAVE_PERFIL); } catch { /* ok */ }
+}
+
+/* ------------------------------- Barra superior ------------------------------- */
+const paginaAtual = (location.pathname.split('/').pop() || '');
+let pintado = null;                          // { nome, perfil } do que está na tela
+
+/** Links que existem para qualquer perfil (a lista completa depende do perfil). */
+const linksComuns = () => PAGINAS.filter((p) => !p.admin)
+  .map((p) => el('a', { href: p.href, 'aria-current': p.href === paginaAtual ? 'page' : null }, p.rotulo));
+
+/** Nome do evento: texto fixo, pode aparecer antes de se saber quem é o usuário. */
+function garantirMarca(topo) {
+  topo.className = 'topo-admin';
+  if (!topo.querySelector('.marca')) topo.prepend(el('div', { class: 'marca' }, '2º Fórum Baiano', el('small', {}, 'Credenciamento')));
+}
+
+function montarTopo(perfil) {
   const topo = document.getElementById('topo');
   if (!topo) return;
-  limpar(topo);
-  topo.className = 'topo-admin';
+  if (pintado && pintado.nome === perfil.nome && pintado.perfil === perfil.perfil) return;   // nada mudou: não redesenha
+  garantirMarca(topo);
+  topo.querySelectorAll('nav, .usuario').forEach((n) => n.remove());   // troca só o menu e o usuário; a marca fica
   const nav = el('nav', { 'aria-label': 'Principal' },
     PAGINAS.filter((p) => !p.admin || perfil.perfil === 'administrador')
-      .map((p) => el('a', { href: p.href, 'aria-current': p.href === pagina ? 'page' : null }, p.rotulo)));
-  const sair = el('button', { class: 'btn sec pequeno', type: 'button', onclick: async () => { await sb.auth.signOut(); location.replace('index.html'); } }, 'Sair');
+      .map((p) => el('a', { href: p.href, 'aria-current': p.href === paginaAtual ? 'page' : null }, p.rotulo)));
+  const sair = el('button', {
+    class: 'btn sec pequeno', type: 'button',
+    onclick: async () => {
+      limparCachePerfil();
+      const { clienteAdmin } = await supabasePronto;
+      await clienteAdmin().auth.signOut();
+      location.replace('index.html');
+    },
+  }, 'Sair');
   topo.append(
-    el('div', { class: 'marca' }, '2º Fórum Baiano', el('small', {}, 'Credenciamento')),
     nav,
     el('div', { class: 'usuario' }, el('span', {}, el('strong', {}, perfil.nome), ' · ', perfil.perfil === 'administrador' ? 'Administrador' : 'Operador'), sair),
   );
+  pintado = { nome: perfil.nome, perfil: perfil.perfil };
+}
+
+function aplicarPerfil(perfil) {
+  montarTopo(perfil);
+  document.querySelectorAll('.so-admin').forEach((n) => { n.hidden = perfil.perfil !== 'administrador'; });
+}
+
+// Desenha a barra imediatamente (este código roda assim que o arquivo carrega):
+// com o perfil em cache, a barra completa; sem cache, o nome do evento e os links que todos têm
+// (os itens de administrador e o nome do usuário entram quando o banco confirmar o perfil).
+{
+  const c = lerCachePerfil();
+  const topo = document.getElementById('topo');
+  if (c) montarTopo(c);
+  else if (topo && sessaoLocal()) {            // só se houver sessão: quem vai para o login não vê barra
+    garantirMarca(topo);
+    topo.append(el('nav', { 'aria-label': 'Principal' }, linksComuns()));
+  }
+}
+
+/* ----------------------------- Verificação do acesso ----------------------------- */
+const redirecionar = (url) => { location.replace(url); return new Promise(() => {}); };
+
+/**
+ * Verifica sessão e perfil. Redireciona para o login quando necessário.
+ * Com o perfil em cache, libera a página na hora e confere no banco em segundo plano.
+ */
+export async function iniciarPagina({ requer = 'staff' } = {}) {
+  const { clienteAdmin } = await supabasePronto;
+  const sb = clienteAdmin();
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { limparCachePerfil(); return redirecionar('index.html'); }
+  // Primeiro acesso / senha redefinida por um administrador: exige trocar a senha antes de usar o painel.
+  if (session.user?.user_metadata?.trocar_senha === true) { limparCachePerfil(); return redirecionar('index.html?erro=trocar_senha'); }
+  const uid = session.user.id;
+
+  let perfil = null;
+  const cache = lerCachePerfil();
+  // O cache nunca CONCEDE acesso a página de administrador: nesse caso confirma no banco antes de liberar.
+  const confiarNoCache = cache && !(requer === 'admin' && cache.perfil !== 'administrador');
+
+  if (confiarNoCache) {
+    perfil = { nome: cache.nome, perfil: cache.perfil };
+    conferirEmSegundoPlano(sb, uid, perfil, requer);
+  } else {
+    const { data, error } = await sb.rpc('fn_meu_perfil');
+    if (error || !data) {
+      limparCachePerfil();
+      await sb.auth.signOut();
+      return redirecionar('index.html?erro=sem_acesso');
+    }
+    if (requer === 'admin' && data.perfil !== 'administrador') { gravarCachePerfil(uid, data); return redirecionar('dashboard.html?erro=permissao'); }
+    perfil = data;
+    gravarCachePerfil(uid, perfil);
+  }
+
+  aplicarPerfil(perfil);
+  iniciarInatividade(sb);
+
+  // sessão expirada/encerrada em outra aba
+  sb.auth.onAuthStateChange((evento) => { if (evento === 'SIGNED_OUT') { limparCachePerfil(); location.replace('index.html'); } });
+  return { sb, perfil, ehAdmin: perfil.perfil === 'administrador' };
+}
+
+/** Confirma o perfil no banco depois de liberar a página com o cache. Só age se a resposta for conclusiva. */
+async function conferirEmSegundoPlano(sb, uid, atual, requer) {
+  let resposta;
+  try { resposta = await sb.rpc('fn_meu_perfil'); } catch { return; }
+  const { data, error } = resposta;
+  if (error) return;                         // falha de rede ou outra: mantém a tela, sem desconectar por engano
+  if (!data) {                               // o banco confirmou: esta pessoa não tem (mais) acesso
+    limparCachePerfil();
+    await sb.auth.signOut();
+    location.replace('index.html?erro=sem_acesso');
+    return;
+  }
+  gravarCachePerfil(uid, data);
+  if (requer === 'admin' && data.perfil !== 'administrador') { location.replace('dashboard.html?erro=permissao'); return; }
+  if (data.nome !== atual.nome || data.perfil !== atual.perfil) aplicarPerfil(data);   // perfil mudou: atualiza a barra
 }
 
 function iniciarInatividade(sb) {
   let t;
   const reiniciar = () => {
     clearTimeout(t);
-    t = setTimeout(async () => { await sb.auth.signOut(); location.replace('index.html?erro=inatividade'); }, INATIVIDADE_MS);
+    t = setTimeout(async () => { limparCachePerfil(); await sb.auth.signOut(); location.replace('index.html?erro=inatividade'); }, INATIVIDADE_MS);
   };
   ['click', 'keydown', 'pointermove', 'touchstart'].forEach((e) => window.addEventListener(e, reiniciar, { passive: true }));
   reiniciar();

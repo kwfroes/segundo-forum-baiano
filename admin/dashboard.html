@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
   <link rel="stylesheet" href="../css/responsive.css">
+  <link rel="stylesheet" href="../css/checkin-duplo.css">
 </head>
 <body class="admin">
   <header id="topo"></header>
@@ -20,18 +21,38 @@
     <section class="grade-indicadores" aria-label="Indicadores">
       <div class="indicador"><div class="rotulo">Total de inscritos</div><div class="valor" id="ind-total">–</div></div>
       <div class="indicador"><div class="rotulo">Inscrições confirmadas</div><div class="valor" id="ind-confirmadas">–</div></div>
-      <div class="indicador ok"><div class="rotulo">Check-ins realizados</div><div class="valor" id="ind-checkins">–</div></div>
-      <div class="indicador alerta"><div class="rotulo">Pendentes de check-in</div><div class="valor" id="ind-pendentes">–</div></div>
+      <div class="indicador ok"><div class="rotulo" id="rot-presentes">Check-ins realizados</div><div class="valor" id="ind-checkins">–</div></div>
+      <div class="indicador alerta"><div class="rotulo" id="rot-pendentes">Pendentes de check-in</div><div class="valor" id="ind-pendentes">–</div></div>
       <div class="indicador"><div class="rotulo">Inscrições não confirmadas</div><div class="valor" id="ind-nao-confirmadas">–</div></div>
       <div class="indicador destaque"><div class="rotulo">Percentual de presença</div><div class="valor" id="ind-percentual">–</div>
         <div class="progresso" aria-hidden="true"><span id="ind-barra"></span></div></div>
+    </section>
+    <p id="nota-incluidos" class="nota" hidden></p>
+
+    <!-- Check-in duplo: aparece somente quando habilitado -->
+    <section id="painel-duplo" class="painel painel-duplo" hidden aria-labelledby="t-duplo">
+      <div class="cab">
+        <h2 id="t-duplo">Check-in duplo</h2>
+        <span id="periodo-atual" class="selo-periodo" role="status"></span>
+      </div>
+      <div class="grade-duplo">
+        <div class="indicador manha"><div class="rotulo">Manhã — presentes</div><div class="valor" id="d-manha">–</div><div class="sub" id="d-manha-sub"></div></div>
+        <div class="indicador tarde"><div class="rotulo">Tarde — presentes</div><div class="valor" id="d-tarde">–</div><div class="sub" id="d-tarde-sub"></div></div>
+        <div class="indicador ok"><div class="rotulo">Nos dois períodos</div><div class="valor" id="d-ambos">–</div></div>
+        <div class="indicador manha"><div class="rotulo">Só manhã</div><div class="valor" id="d-so-manha">–</div></div>
+        <div class="indicador tarde"><div class="rotulo">Só tarde</div><div class="valor" id="d-so-tarde">–</div></div>
+        <div class="indicador alerta"><div class="rotulo">Pendentes na manhã</div><div class="valor" id="d-pend-manha">–</div></div>
+        <div class="indicador alerta"><div class="rotulo">Pendentes na tarde</div><div class="valor" id="d-pend-tarde">–</div></div>
+      </div>
+      <p id="nota-unicos" class="nota nota-duplo" hidden></p>
     </section>
 
     <div class="linha-2col">
       <section class="painel" aria-labelledby="t-evolucao">
         <h2 id="t-evolucao">Evolução dos check-ins</h2>
         <div class="legenda">
-          <span class="l-barra">Check-ins no intervalo</span>
+          <span class="l-barra" id="leg-manha">Check-ins no intervalo</span>
+          <span class="l-tarde" id="leg-tarde" hidden>Tarde</span>
           <span class="l-linha">Acumulado</span>
           <label class="sr-only" for="intervalo">Intervalo do gráfico</label>
           <select id="intervalo" aria-label="Intervalo do gráfico">
@@ -56,8 +77,17 @@
           <select id="cfg-aberto"><option value="true">Aberto</option><option value="false">Fechado</option></select></div>
         <div class="campo"><label for="cfg-tempo">Retorno automático (segundos)</label>
           <input id="cfg-tempo" type="number" min="3" max="60" step="1"></div>
-        <div class="campo"><button id="cfg-salvar" class="btn" type="button">Salvar configurações</button></div>
       </div>
+      <div class="cfg-duplo formulario-admin">
+        <div class="campo"><label for="cfg-duplo">Check-in duplo</label>
+          <select id="cfg-duplo"><option value="false">Desativado (check-in único)</option><option value="true">Ativado (manhã e tarde)</option></select></div>
+        <div class="campo"><label for="cfg-manha">Manhã válida até</label>
+          <input id="cfg-manha" type="time" value="12:00"></div>
+        <div class="campo"><label for="cfg-tarde">Tarde a partir de</label>
+          <input id="cfg-tarde" type="time" value="13:30"></div>
+      </div>
+      <p class="nota">Com o check-in duplo ativado, cada participante faz um check-in na manhã e outro na tarde (fuso de Salvador). Entre os dois horários o check-in público fica fechado; a equipe ainda pode registrar pelo painel. Ative antes do início do evento.</p>
+      <div class="campo formulario-admin"><button id="cfg-salvar" class="btn" type="button">Salvar configurações</button></div>
     </section>
   </main>
   <script type="module" src="../js/dashboard.js"></script>
