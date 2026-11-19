@@ -76,8 +76,9 @@
         <div class="campo"><label for="cfg-aberto">Credenciamento público</label>
           <select id="cfg-aberto"><option value="true">Aberto</option><option value="false">Fechado</option></select></div>
         <div class="campo"><label for="cfg-tempo">Retorno automático (segundos)</label>
-          <input id="cfg-tempo" type="number" min="3" max="60" step="1"></div>
+          <input id="cfg-tempo" type="number" min="3" max="99" step="1" placeholder="em branco = sem retorno"></div>
       </div>
+      <p class="nota">Retorno automático da tela de resultado: de 3 a 60 segundos. Em <strong>branco</strong> ou <strong>99</strong> ela não volta sozinha: a pessoa fecha em “Novo check-in” ou no X.</p>
       <div class="cfg-duplo formulario-admin">
         <div class="campo"><label for="cfg-duplo">Check-in duplo</label>
           <select id="cfg-duplo"><option value="false">Desativado (check-in único)</option><option value="true">Ativado (manhã e tarde)</option></select></div>

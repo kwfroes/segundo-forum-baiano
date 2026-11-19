@@ -2,6 +2,8 @@
  * usuarios.js — gestão de logins do painel (somente administrador).
  *  • Listar / editar / ativar-desativar: funções do banco (perfil validado no servidor).
  *  • Criar login e redefinir senha: Edge Function "admin-usuarios" (a chave service_role fica só no servidor).
+ *  • Dados de acesso: "Copiar mensagem" (sempre disponível) ou "Enviar por e-mail" (Edge Function "enviar-acesso": o e-mail
+ *    vai SÓ para o endereço cadastrado do usuário, com os dados de acesso e instruções rápidas de uso).
  *  • Senhas são TEMPORÁRIAS: o usuário é obrigado a trocá-las no primeiro acesso.
  *  • A senha só é exibida na tela uma vez e nunca é guardada pelo sistema.
  *  • USUÁRIO PROTEGIDO: só ele mesmo altera os próprios dados (e só o nome); para os demais administradores os
@@ -10,7 +12,7 @@
  */
 import { iniciarPagina, aviso, confirmar, abrirDialogo } from './admin-shell.js';
 import { botaoIcone, comIcone, etiquetaIcone } from './icones.js';
-import { el, limpar, formatarDataHora, gerarSenhaTemporaria, mensagemErro } from './utils.js';
+import { el, limpar, formatarDataHora, formatarHoraCurta, gerarSenhaTemporaria, mensagemErro } from './utils.js';
 
 const $ = (id) => document.getElementById(id);
 const { sb, perfil } = await iniciarPagina({ requer: 'admin', pagina: 'usuarios.html' });
@@ -21,13 +23,13 @@ const ROTULO_PERFIL = { administrador: 'Administrador', operador: 'Operador' };
 let usuarios = [];
 
 /* ------------------------- Chamada à Edge Function ------------------------- */
-async function chamarFuncao(corpo) {
-  const { data, error } = await sb.functions.invoke('admin-usuarios', { body: corpo });
+async function chamarFuncao(corpo, nome = 'admin-usuarios') {
+  const { data, error } = await sb.functions.invoke(nome, { body: corpo });
   if (error) {
     let det = null;
     try { det = await error.context?.json?.(); } catch { /* sem corpo */ }
     if (det && det.mensagem) return det;
-    return { ok: false, codigo: 'rede', mensagem: 'Não foi possível contatar o servidor. Verifique se a função "admin-usuarios" foi publicada e tente novamente.' };
+    return { ok: false, codigo: 'rede', mensagem: `Não foi possível contatar o servidor. Verifique se a função "${nome}" foi publicada e tente novamente.` };
   }
   return data || { ok: false, codigo: 'interno', mensagem: 'Resposta vazia do servidor.' };
 }
@@ -97,22 +99,44 @@ function campoSenha(valorInicial) {
     el('p', { class: 'nota' }, 'O usuário será obrigado a trocá-la no primeiro acesso.')) };
 }
 
-async function mostrarCredenciais({ titulo, email, senha, observacao }) {
-  const texto = `E-mail: ${email}\nSenha temporária: ${senha}`;
+/** Página de login (na mesma pasta /admin/ em que o painel está aberto). */
+const linkLogin = () => new URL('index.html', location.href).href;
+
+/** Mensagem pronta para enviar ao usuário: é o texto que o botão "Copiar mensagem" copia. */
+function mensagemAcesso({ email, senha, perfil, modo }) {
+  const papel = perfil === 'administrador' ? 'Administrador' : 'Operador';
+  const link = linkLogin();
+  const abertura = modo === 'criado'
+    ? `Seu acesso ao painel de credenciamento do 2º Fórum Baiano de Compras Públicas foi criado como ${papel}.`
+    : `A senha do seu acesso ao painel de credenciamento do 2º Fórum Baiano de Compras Públicas (${papel}) foi redefinida.`;
+  return [abertura, '', `Link de acesso: ${link}`, `E-mail: ${email}`, `Senha temporária: ${senha}`, '', 'Ao entrar, você precisará alterar a senha.'].join('\n');
+}
+
+async function mostrarCredenciais({ titulo, email, senha, perfil, modo = 'criado', usuarioId = null, envio = null }) {
+  const texto = mensagemAcesso({ email, senha, perfil, modo });
+  const botoes = [{ rotulo: 'Copiar mensagem', valor: 'copiar', classe: 'sec' }];
+  if (usuarioId) botoes.push({ rotulo: envio ? 'Reenviar por e-mail' : 'Enviar por e-mail', valor: 'enviar', classe: 'sec' });
+  botoes.push({ rotulo: 'Concluir', valor: 'ok' });
   await abrirDialogo({
     titulo,
     corpo: el('div', { class: 'dlg-form' },
-      el('p', {}, 'Envie estes dados ao usuário por um canal seguro. ', el('strong', {}, 'A senha não será exibida novamente.')),
-      el('div', { class: 'credenciais' }, el('div', {}, el('strong', {}, 'E-mail: '), email), el('div', {}, el('strong', {}, 'Senha temporária: '), senha)),
-      el('p', { class: 'nota' }, observacao || 'No primeiro acesso o sistema exige a criação de uma nova senha.')),
-    botoes: [
-      { rotulo: 'Copiar dados', valor: 'copiar', classe: 'sec' },
-      { rotulo: 'Concluir', valor: 'ok' },
-    ],
+      el('p', {}, 'Mensagem pronta para enviar ao usuário por um canal seguro. ', el('strong', {}, 'A senha não será exibida novamente.')),
+      usuarioId ? el('p', { class: 'nota' }, `“Enviar por e-mail” manda esta mensagem, com instruções rápidas de uso, para ${email} (o endereço cadastrado). “Copiar mensagem” continua disponível.`) : null,
+      envio ? el('p', { class: 'msg ok', role: 'status' }, `E-mail enviado para ${envio.destino} às ${envio.hora}.`) : null,
+      el('div', { class: 'credenciais mensagem-envio' }, texto)),
+    botoes,
   }).then(async (r) => {
     if (r === 'copiar') {
-      try { await navigator.clipboard.writeText(texto); aviso('Dados copiados.', 'ok'); } catch { aviso('Não foi possível copiar; anote os dados exibidos.', 'alerta'); }
-      return mostrarCredenciais({ titulo, email, senha, observacao });
+      try { await navigator.clipboard.writeText(texto); aviso('Mensagem copiada. Cole e envie ao usuário.', 'ok'); } catch { aviso('Não foi possível copiar; selecione e copie o texto exibido.', 'alerta'); }
+      return mostrarCredenciais({ titulo, email, senha, perfil, modo, usuarioId, envio });
+    }
+    if (r === 'enviar') {
+      aviso('Enviando e-mail…', 'info');
+      const resp = await chamarFuncao({ acao: 'enviar', usuario_id: usuarioId, senha, modo, link: linkLogin() }, 'enviar-acesso');
+      let novoEnvio = envio;
+      if (resp.ok) { aviso(`E-mail enviado para ${resp.destino}.`, 'ok'); novoEnvio = { destino: resp.destino, hora: formatarHoraCurta(new Date().toISOString()) }; }
+      else aviso(resp.mensagem || 'Não foi possível enviar o e-mail.', 'erro');
+      return mostrarCredenciais({ titulo, email, senha, perfil, modo, usuarioId, envio: novoEnvio });    // a senha continua à vista até "Concluir"
     }
     return r;
   });
@@ -152,7 +176,7 @@ async function novo() {
   if (resultado.existente) {
     aviso(`${email.value.trim()} já tinha login no projeto e foi autorizado no painel como ${ROTULO_PERFIL[sel.value]}. A senha dele não foi alterada.`, 'ok');
   } else {
-    await mostrarCredenciais({ titulo: 'Usuário criado', email: email.value.trim().toLowerCase(), senha: senha.entrada.value });
+    await mostrarCredenciais({ titulo: 'Usuário criado', email: email.value.trim().toLowerCase(), senha: senha.entrada.value, perfil: sel.value, modo: 'criado', usuarioId: resultado.usuario_id });
   }
 }
 
@@ -209,7 +233,7 @@ async function novaSenha(u) {
     },
   });
   if (!ok) return;
-  await mostrarCredenciais({ titulo: 'Senha redefinida', email: u.email, senha: senha.entrada.value, observacao: 'No próximo acesso o sistema exige a criação de uma nova senha.' });
+  await mostrarCredenciais({ titulo: 'Senha redefinida', email: u.email, senha: senha.entrada.value, perfil: u.perfil, modo: 'redefinida', usuarioId: u.id });
 }
 
 async function enviarLink(u) {

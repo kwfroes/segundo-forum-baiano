@@ -19,6 +19,19 @@ let temporizador = null;
 let enviando = false;
 let bloqueado = false;          // intervalo do check-in duplo
 
+/**
+ * Tempo do retorno automático, em segundos. NULO = sem retorno automático (configuração em branco ou 99):
+ * a tela de resultado fica até alguém tocar em "Novo check-in" ou no X.
+ */
+function tempoRetorno() {
+  const t = config.tempo_retorno_segundos;
+  if (t === null || t === '') return null;
+  const n = Number(t);
+  if (!Number.isFinite(n)) return 8;                 // valor ilegível: mantém o padrão
+  if (n >= 99) return null;
+  return Math.max(3, n);
+}
+
 /** "12:00" → "12h"; "13:30" → "13h30" */
 const horaTexto = (t) => {
   const [h, m] = String(t || '').split(':');
@@ -139,20 +152,25 @@ function mostrarResultado(chave, dados = {}) {
   telaInicial.hidden = true;
   telaResultado.hidden = false;
 
-  // Retorno automático (RF005) — tempo configurável no banco
-  const total = Math.max(3, Number(config.tempo_retorno_segundos) || 8);
-  let restante = total;
-  const barra = $('res-barra');
-  $('res-contagem').textContent = restante;
-  barra.style.transition = 'none'; barra.style.transform = 'scaleX(1)';
-  void barra.offsetWidth;
-  barra.style.transition = `transform ${total}s linear`; barra.style.transform = 'scaleX(0)';
+  // Retorno automático (RF005) — tempo configurável no banco. Em branco ou 99 = sem retorno automático.
   clearInterval(temporizador);
-  temporizador = setInterval(() => {
-    restante -= 1;
-    $('res-contagem').textContent = Math.max(restante, 0);
-    if (restante <= 0) irParaInicio();
-  }, 1000);
+  const total = tempoRetorno();
+  const comTempo = total !== null;
+  $('res-retorno').hidden = !comTempo;
+  $('res-barra-box').hidden = !comTempo;
+  if (comTempo) {
+    let restante = total;
+    const barra = $('res-barra');
+    $('res-contagem').textContent = restante;
+    barra.style.transition = 'none'; barra.style.transform = 'scaleX(1)';
+    void barra.offsetWidth;
+    barra.style.transition = `transform ${total}s linear`; barra.style.transform = 'scaleX(0)';
+    temporizador = setInterval(() => {
+      restante -= 1;
+      $('res-contagem').textContent = Math.max(restante, 0);
+      if (restante <= 0) irParaInicio();
+    }, 1000);
+  }
   $('btn-voltar').focus();
 }
 
@@ -204,6 +222,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 $('btn-voltar').addEventListener('click', irParaInicio);
+$('btn-fechar').addEventListener('click', irParaInicio);
 
 carregarConfig();
 // O período muda com o horário: atualiza a faixa e o bloqueio mesmo com a tela parada.

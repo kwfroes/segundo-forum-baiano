@@ -15,7 +15,6 @@
   <header id="topo"></header>
   <main class="conteudo-admin">
     <h1>Importação da base de inscritos</h1>
-
     <section class="painel formulario-admin" aria-labelledby="t-imp">
       <h2 id="t-imp">1. Selecione o arquivo no molde da planilha</h2>
       <p>O sistema espera o arquivo <strong>CSV (separador “;”, UTF-8 ou ANSI)</strong> no mesmo molde de <em>Dados 2 forum.csv</em>, com o cabeçalho na primeira linha e estas colunas (a ordem não importa; colunas extras são ignoradas):</p>
@@ -27,32 +26,26 @@
       </ul>
       <div class="campo"><label for="arquivo">Arquivo CSV</label><input id="arquivo" type="file" accept=".csv,text/csv"></div>
     </section>
-
     <section id="previa" class="painel formulario-admin" hidden aria-live="polite">
       <h2>2. Conferência antes de importar</h2>
       <div id="resumo-previa" class="resumo-import"></div>
       <p id="colunas-info" class="nota"></p>
-
       <fieldset id="bloco-criterio" class="criterio">
         <legend>Como definir “inscrição confirmada” (quem pode fazer check-in)</legend>
         <p id="msg-criterio" class="msg alerta" hidden></p>
-        <label><input type="radio" name="criterio" id="crit-analise"><span>Coluna “Análise SRL/SAEB”<small>SIM, PAINELISTA, PRODUÇÃO e PALESTRANTE = confirmada; NÃO ou vazio = não confirmada. <span id="n-analise"></span></small></span></label>
+        <label><input type="radio" name="criterio" id="crit-analise"><span>Coluna “Análise SRL/SAEB”<small>SIM, PALESTRANTE/PAINELISTA, CONVIDADO, ESTANDISTA e PRODUÇÃO = confirmada (PAINELISTA e PALESTRANTE, sozinhos, também valem); NÃO ou vazio = não confirmada. <span id="n-analise"></span></small></span></label>
         <label><input type="radio" name="criterio" id="crit-coluna"><span>Coluna “Inscrição confirmada”<small>SIM = confirmada; qualquer outro valor = não confirmada. <span id="n-coluna"></span></small></span></label>
       </fieldset>
-
       <h3>Amostra (5 primeiros registros)</h3>
       <div class="tabela-rolavel"><table class="dados"><thead id="p-cab"></thead><tbody id="p-corpo"></tbody></table></div>
-
       <details open>
         <summary><strong id="n-ocorrencias"></strong> — erros e avisos encontrados no arquivo</summary>
         <p><button id="baixar-ocorrencias" class="btn sec pequeno" type="button">Baixar ocorrências (CSV)</button></p>
         <div class="tabela-rolavel"><table class="dados"><thead><tr><th>Linha</th><th>Situação</th><th>Participante</th><th>Mensagem</th></tr></thead><tbody id="p-ocorrencias"></tbody></table></div>
       </details>
-
       <p><button id="importar" class="btn" type="button">Importar registros</button></p>
       <progress id="progresso" max="100" value="0" hidden></progress>
     </section>
-
     <section id="relatorio" class="painel" hidden aria-live="polite">
       <h2>3. Relatório da importação</h2>
       <div id="resumo-final" class="resumo-import"></div>

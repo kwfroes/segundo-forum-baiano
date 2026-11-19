@@ -32,3 +32,137 @@
 @media print {
   .fundo, .topo-admin, .filtros, .acoes-tabela, .paginacao, dialog { display: none !important; }
 }
+
+/* =====================================================================
+   RESPONSIVIDADE v2 (acrescentado ao final — nada acima foi alterado)
+
+   Estas regras só valem em telas de até 960 px (tablet e celular), em telas
+   baixas (celular deitado) ou em dispositivos de TOQUE. Em notebook e desktop
+   com mouse (a partir de 961 px) o painel continua exatamente como era.
+   O prefixo "body.admin" garante que estas regras vençam as de
+   checkin-duplo.css, que é carregado depois deste arquivo.
+   ===================================================================== */
+
+/* ---------- Tablet e celular (≤ 960 px) ---------- */
+@media (max-width: 960px) {
+  /* Barra superior: marca + usuário na 1ª linha, menu na 2ª (com rolagem lateral).
+     A regra anterior ("width: 100%") não funcionava porque o admin.css define "flex: 1",
+     e a base 0% do flex prevalece sobre a largura: o menu ficava espremido e cortado. */
+  body.admin > #topo { min-height: 104px; }   /* altura da barra em duas linhas: evita o "pulo" quando o menu aparece */
+  body.admin .topo-admin { padding: 8px 16px; gap: 6px 10px; }
+  body.admin .topo-admin .marca { flex: 0 0 auto; }
+  body.admin .topo-admin .usuario { order: 2; flex: 1 1 0; min-width: 0; justify-content: flex-end; }
+  body.admin .topo-admin .usuario > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body.admin .topo-admin nav { order: 3; flex: 1 1 100%; width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  body.admin .topo-admin nav::-webkit-scrollbar { display: none; }
+  body.admin .topo-admin nav a { flex: none; }
+
+  body.admin .conteudo-admin { padding: 16px; }
+}
+
+/* ---------- Tabelas em tablet e celular (≤ 960 px ou qualquer tela de toque) ---------- */
+@media (max-width: 960px), (pointer: coarse) {
+  /* A rolagem vertical passa a ser a da própria página (sem "rolagem dentro de rolagem")
+     e a coluna do nome fica fixa à esquerda ao rolar a tabela para o lado. */
+  body.admin .tabela-rolavel { max-height: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  body.admin .tabela-rolavel > table.dados th:first-child,
+  body.admin .tabela-rolavel > table.dados td:first-child { position: sticky; left: 0; }
+  body.admin .tabela-rolavel > table.dados th:first-child { z-index: 3; }
+  body.admin .tabela-rolavel > table.dados td:first-child { z-index: 2; background: #fff; box-shadow: 1px 0 0 var(--borda); }
+  body.admin .tabela-rolavel > table.dados tr:hover td:first-child { background: #F7FBFE; }
+}
+
+/* ---------- Notebook pequeno / tablet deitado (961 a 1180 px) ---------- */
+@media (min-width: 961px) and (max-width: 1180px) {
+  /* Em 1024 px a barra superior media ~1100 px (nome longo + 5 itens de menu) e a página rolava para o lado,
+     cortando o botão Sair. Aqui ela só se compacta; a partir de 1181 px nada muda. */
+  body.admin .topo-admin { gap: 12px; padding-left: 16px; padding-right: 16px; }
+  body.admin .topo-admin nav a { padding: 8px 10px; }
+  body.admin .topo-admin .usuario { min-width: 0; }
+  body.admin .topo-admin .usuario > span { max-width: 230px; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (min-width: 961px) and (max-width: 1010px) {
+  body.admin .topo-admin .usuario > span { max-width: 170px; }
+}
+
+/* ---------- Celular (≤ 700 px): gráfico legível ---------- */
+@media (max-width: 700px) {
+  /* O gráfico tem proporção fixa: em tela estreita as letras ficavam com ~5 px.
+     Ele ganha largura mínima e rola para o lado dentro do próprio quadro. */
+  body.admin section.painel[aria-labelledby="t-evolucao"] { overflow-x: auto; }
+  body.admin .grafico { min-width: 640px; }
+  body.admin .grafico text { font-size: 13px; }
+}
+
+/* ---------- Celular (≤ 560 px) ---------- */
+@media (max-width: 560px) {
+  body.admin .conteudo-admin { padding: 12px; }
+  body.admin .conteudo-admin > h1, body.admin .barra-topo h1 { font-size: 1.4rem; }
+  body.admin .painel { padding: 14px; }
+  body.admin .topo-admin nav a { padding: 8px 12px; font-size: .92rem; }
+
+  /* título + botão de ação: o botão ocupa a largura toda */
+  body.admin .barra-topo { gap: 10px; }
+  body.admin .barra-topo > .btn, body.admin .barra-topo .grupo { flex: 1 1 100%; }
+  body.admin .barra-topo .grupo .btn { flex: 1 1 auto; justify-content: center; }
+  body.admin .barra-topo > .btn { justify-content: center; }
+
+  /* filtros em 2 colunas (a busca ocupa a linha inteira) em vez de 6 campos empilhados */
+  body.admin .filtros { grid-template-columns: 1fr 1fr; gap: 10px; }
+  body.admin .filtros > div:first-child { grid-column: 1 / -1; }
+
+  /* cartões do dashboard (inclui o painel do check-in duplo) em 2 colunas */
+  body.admin .grade-duplo { grid-template-columns: 1fr 1fr; gap: 10px; }
+  body.admin .indicador { padding: 12px; }
+  body.admin .indicador .rotulo { font-size: .74rem; }
+  body.admin .grade-duplo .indicador .valor { font-size: 1.5rem; }
+
+  /* configurações e formulários: campos na largura toda */
+  body.admin .cfg-linha > div, body.admin .cfg-duplo > div { flex: 1 1 100%; min-width: 0; }
+  body.admin .lista-molde { columns: 1; }
+
+  /* avisos ocupam a largura da tela */
+  body.admin .toasts { left: 8px; right: 8px; bottom: 8px; max-width: none; }
+
+  /* diálogos mais compactos */
+  body.admin dialog .dlg-cab { padding: 14px 16px 0; }
+  body.admin dialog .dlg-corpo { padding: 10px 16px; }
+  body.admin dialog .dlg-rodape { padding: 10px 16px 14px; }
+  body.admin dialog .dlg-rodape .btn { flex: 1 1 auto; justify-content: center; }
+  body.admin .grade-form { grid-template-columns: 1fr; }
+  body.admin table.dados td.nome { min-width: 150px; }
+}
+
+/* ---------- Dispositivos de TOQUE (celular e tablet, em qualquer largura) ---------- */
+@media (pointer: coarse) {
+  /* alvos de toque de pelo menos 36–44 px (antes: 22 a 32 px) */
+  body.admin .btn { min-height: 44px; }
+  body.admin .btn.pequeno { min-height: 40px; padding: 6px 12px; }
+  body.admin .btn.mini { min-height: 36px; padding: 4px 14px; font-size: .85rem; }
+  body.admin .btn-icone { width: 40px; height: 40px; }
+  body.admin .btn-icone.mini { width: 36px; height: 36px; }
+  body.admin .btn-icone.grande { width: 44px; height: 44px; }
+  body.admin .link-botao { display: inline-flex; align-items: center; min-height: 40px; }
+  body.admin .topo-admin nav a { padding-top: 10px; padding-bottom: 10px; }
+  body.admin select, body.admin input[type="text"], body.admin input[type="email"], body.admin input[type="password"], body.admin input[type="search"],
+  body.admin input[type="number"], body.admin input[type="tel"], body.admin input[type="time"] { min-height: 44px; }
+  body.admin table.dados th button { width: 100%; padding: 12px 0; margin: -12px 0; }
+  body.admin .link-botao { min-width: 44px; justify-content: center; }
+  body.admin details > summary { padding: 10px 0; cursor: pointer; }
+}
+
+/* ---------- Diálogos em celular (em pé ou deitado) ---------- */
+@media (max-width: 560px), (max-height: 520px) and (max-width: 960px) {
+  /* O diálogo vira uma coluna: cabeçalho e botões ficam sempre à vista e só o miolo rola,
+     em qualquer altura de tela (inclusive com o teclado aberto). */
+  body.admin dialog[open] { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); }
+  body.admin dialog .dlg-cab, body.admin dialog .dlg-rodape { flex: none; }
+  body.admin dialog .dlg-corpo { flex: 1 1 auto; min-height: 0; max-height: none; }
+}
+
+/* ---------- Celular deitado (altura ≤ 520 px e largura ≤ 960 px) ---------- */
+/* A restrição de largura evita afetar notebook com o DevTools encaixado embaixo (janela baixa, mas larga). */
+@media (max-height: 520px) and (max-width: 960px) {
+  /* a barra não fica fixa: sobraria pouca tela para o conteúdo */
+  body.admin > #topo { position: static; min-height: 0; }
+}

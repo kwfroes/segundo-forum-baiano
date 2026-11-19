@@ -65,3 +65,9 @@ input[type="tel"]:focus, input[type="time"]:focus { outline: none; border-color:
 .bloco-cpf .nota { margin: 6px 0 0; }
 .dlg-form .grade-form .campo { margin-bottom: 12px; }
 @media (max-width: 640px) { .grade-form { grid-template-columns: 1fr; } }
+
+/* ---------- Tela pública: botão X do resultado (útil quando não há retorno automático) ---------- */
+#tela-resultado { position: relative; }
+.fechar-resultado { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; display: grid; place-items: center; padding: 0;
+  border: 2px solid var(--borda); border-radius: 50%; background: var(--fundo-2); color: var(--azul-profundo); cursor: pointer; }
+.fechar-resultado:hover { background: #E7F0F7; }

@@ -10,10 +10,12 @@
  *    CPF inválido ou repetido (outra pessoa) → a pessoa entra SEM CPF (atendimento manual).
  *  • Inscrição duplicada (mesmo CPF e mesma pessoa; ou mesmo nome + e-mail) → ignorada e reportada.
  *  • "Inscrição confirmada": o administrador escolhe o critério na prévia — coluna "Análise SRL/SAEB"
- *    (SIM, PAINELISTA, PRODUÇÃO e PALESTRANTE = confirmada) ou coluna "Inscrição confirmada" (SIM).
+ *    (SIM, PALESTRANTE/PAINELISTA, CONVIDADO, ESTANDISTA e PRODUÇÃO = confirmada; PAINELISTA e PALESTRANTE
+ *    sozinhos também valem) ou coluna "Inscrição confirmada" (SIM).
  *  • "Sim, autorizo" / "Não desejo." / "SIM" / "Não se aplica" → booleanos.
  *  • Linhas em branco e colunas extras vazias são ignoradas; nome ausente → erro.
  *  • Check-ins existentes nunca são alterados (tabela separada).
+ *  • Só as colunas PRESENTES no arquivo são atualizadas nos registros que já existem.
  */
 import { iniciarPagina, aviso, confirmar } from './admin-shell.js';
 import { el, limpar, interpretarCsv, decodificarArquivo, somenteDigitos, cpfValido, cpfOculto, gerarCsv, baixarArquivo, mensagemErro } from './utils.js';
@@ -51,8 +53,13 @@ const MOLDE = [
 ];
 const TEXTOS = ['tipo_inscricao', 'matricula_funcional', 'telefone_principal', 'telefone_secundario', 'email_institucional', 'orgao_unidade', 'secretaria', 'unidade_gestora', 'nome_unidade', 'municipio_lotacao', 'cargo_funcao', 'area_atuacao'];
 const BOOLEANOS = ['autorizacao_contato', 'deseja_atualizacoes', 'devolutiva_enviada', 'email_enviado'];
-const ANALISE_APROVADA = new Set(['sim', 'painelista', 'producao', 'palestrante']);
-
+// "Análise SRL/SAEB" que valem como APROVADO. Comparação sem acento, sem maiúsculas e sem pontuação
+// ("Palestrante / Painelista" = "PALESTRANTE/PAINELISTA"). Inclui a equipe do evento.
+const ANALISE_APROVADA = new Set([
+  'sim',
+  'painelista', 'palestrante', 'palestrante_painelista', 'painelista_palestrante',
+  'convidado', 'estandista', 'producao',
+]);
 const norm = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 const limparEspacos = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
 const chaveNome = (s) => norm(s);
@@ -112,7 +119,6 @@ function processar(texto) {
     const linha = cols.numero;
     const nome = limparEspacos(col(cols, 'nome_completo'));
     if (!nome) return ocorrencia(ocorrencias, linha, 'erro', '', 'Não importado: nome completo ausente.');
-
     const reg = { _linha: linha, nome_completo: nome, cpf: '' };
     const meta = { semCpfMotivo: null, avisos: [] };
 
@@ -126,12 +132,14 @@ function processar(texto) {
 
     TEXTOS.forEach((c) => { if (c in indice) reg[c] = limparEspacos(col(cols, c)); });
     if ('email_institucional' in indice) reg.email_institucional = reg.email_institucional.toLowerCase();
+
     BOOLEANOS.forEach((c) => {
       if (!(c in indice)) return;
       const r = lerBooleano(col(cols, c));
       if (r.desconhecido) meta.avisos.push(`Valor não reconhecido em "${MOLDE.find((m) => m.campo === c).titulo.split(' (')[0].slice(0, 40)}": "${col(cols, c).slice(0, 30)}" (tratado como vazio).`);
       reg[c] = r.valor;
     });
+
     if ('analise_srl_saeb' in indice) {
       const a = limparEspacos(col(cols, 'analise_srl_saeb')).toLocaleUpperCase('pt-BR');
       reg.analise_srl_saeb = a;
@@ -243,13 +251,12 @@ function atualizarPrevia() {
   );
 
   $('n-coluna').textContent = e.temColuna ? `${fmt(e.nColuna)} registro(s) marcados como SIM` : 'coluna ausente no arquivo';
-  $('n-analise').textContent = e.temAnalise ? `${fmt(e.nAnalise)} registro(s) aprovados (SIM, PAINELISTA, PRODUÇÃO, PALESTRANTE)` : 'coluna ausente no arquivo';
+  $('n-analise').textContent = e.temAnalise ? `${fmt(e.nAnalise)} registro(s) aprovados (SIM, PALESTRANTE/PAINELISTA, CONVIDADO, ESTANDISTA, PRODUÇÃO)` : 'coluna ausente no arquivo';
   $('crit-coluna').disabled = !e.temColuna;
   $('crit-analise').disabled = !e.temAnalise;
   $('crit-coluna').checked = e.criterio === 'coluna';
   $('crit-analise').checked = e.criterio === 'analise';
   $('bloco-criterio').hidden = !(e.temColuna || e.temAnalise);
-
   const m = $('msg-criterio');
   if (e.temColuna && e.temAnalise && e.nColuna === 0 && e.nAnalise > 0) {
     m.hidden = false;

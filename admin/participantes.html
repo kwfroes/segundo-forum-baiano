@@ -11,13 +11,18 @@
   <link rel="stylesheet" href="../css/admin.css">
   <link rel="stylesheet" href="../css/responsive.css">
   <link rel="stylesheet" href="../css/checkin-duplo.css">
+  <link rel="stylesheet" href="../css/equipe.css">
 </head>
 <body class="admin">
   <header id="topo"></header>
   <main class="conteudo-admin">
     <div class="barra-topo">
       <h1>Participantes</h1>
-      <div class="grupo"><button id="adicionar" class="btn" type="button">+ Adicionar participante</button></div>
+      <div class="grupo">
+        <button id="cpf-toggle" class="btn sec" type="button" aria-pressed="false" hidden>Mostrar CPF</button>
+        <button id="baixar-csv" class="btn sec" type="button" hidden>Baixar CSV</button>
+        <button id="adicionar" class="btn" type="button">+ Adicionar participante</button>
+      </div>
     </div>
     <p id="faixa-periodo" class="aviso-periodo" role="status" hidden></p>
     <form id="filtros" class="filtros formulario-admin" novalidate>
@@ -25,10 +30,10 @@
       <div><label for="f-secretaria">Secretaria</label><select id="f-secretaria"><option value="">Todas</option></select></div>
       <div><label for="f-orgao">Órgão/unidade</label><select id="f-orgao"><option value="">Todos</option></select></div>
       <div><label for="f-municipio">Município</label><select id="f-municipio"><option value="">Todos</option></select></div>
-      <div><label for="f-inscricao">Inscrição</label><select id="f-inscricao"><option value="todas">Todas</option><option value="confirmada">Confirmada</option><option value="nao_confirmada">Não confirmada</option></select></div>
+      <div><label for="f-inscricao">Inscrição</label><select id="f-inscricao"><option value="todas">Todas</option><option value="confirmada" selected>Confirmada</option><option value="nao_confirmada">Não confirmada</option></select></div>
       <div><label for="f-checkin">Check-in</label><select id="f-checkin"><option value="todos">Todos</option><option value="presente">Presente</option><option value="ausente">Ausente</option></select></div>
+      <div><label for="f-equipe">Equipe</label><select id="f-equipe"><option value="todos">Todos</option><option value="equipe">Toda a equipe</option><option value="palestrante_painelista">Palestrantes/Painelistas</option><option value="convidado">Convidados</option><option value="estandista">Estandistas</option><option value="producao">Produção</option><option value="participantes">Só participantes</option></select></div>
     </form>
-
     <div class="tabela-rolavel">
       <table class="dados tabela-acoes" id="tabela">
         <caption class="sr-only">Participantes inscritos</caption>
@@ -36,6 +41,7 @@
         <tbody id="corpo"></tbody>
       </table>
     </div>
+    <p class="legenda-equipe"><span class="amostra-equipe" aria-hidden="true"></span> Linhas em destaque: <strong>equipe do evento</strong> (palestrantes/painelistas, convidados, estandistas e produção). Use o filtro “Equipe” para listar só esse grupo.</p>
     <div class="paginacao">
       <span id="contagem" role="status"></span>
       <span>

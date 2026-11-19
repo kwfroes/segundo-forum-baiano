@@ -2,20 +2,29 @@
  * participantes.js — RF008 (consulta), RF009 (histórico) e ações da equipe.
  *  • Check-in pelo painel: UM CLIQUE, sem justificativa (operador e administrador). Fica na auditoria.
  *  • Check-in duplo: um botão por período (manhã / tarde).
- *  • Incluir participante que não está na base (nome, CPF, e-mail e justificativa obrigatórios; celular opcional).
+ *  • Incluir participante que não está na base (nome, CPF, e-mail, identificação e justificativa obrigatórios; celular opcional).
+ *    A identificação (Participante, Palestrante/Painelista, Convidado, Estandista ou Produção) é gravada na coluna
+ *    Análise SRL/SAEB e conta como aprovado.
  *  • Editar dados do participante: o operador altera NOME e CPF; o administrador altera QUALQUER dado cadastral.
  *    (O banco valida o perfil de novo; o CPF aparece sempre mascarado e toda alteração fica na auditoria.)
  *  • Cancelar check-in e confirmar inscrição: somente administrador (com motivo).
  *  • Botões só com ícone (title + aria-label); textos longos da tabela em uma linha, com o texto completo ao passar o mouse.
  *    O NOME do participante nunca é cortado.
- * CPF é exibido sempre mascarado; a busca por CPF é feita no servidor.
+ *  • EQUIPE DO EVENTO (palestrantes/painelistas, convidados, estandistas e produção): as linhas ficam em destaque, com a
+ *    categoria ao lado do nome, e há o filtro "Equipe". A categoria vem do banco (a partir da coluna Análise SRL/SAEB).
+ *  • FILTRO "Inscrição": a tela abre com "Confirmada" selecionada (o administrador pode escolher "Todas").
+ *  • CPF COMPLETO (somente administrador): botão "Mostrar CPF". O CPF só chega do banco depois da confirmação, cada
+ *    exibição fica na auditoria (apenas a quantidade) e os CPFs voltam a ser ocultados sozinhos em 5 minutos.
+ *  • DOWNLOAD DE CSV (somente administrador): lista completa ou somente o que está filtrado na tela, com ou sem CPF completo
+ *    (o CPF completo exige confirmação e fica na auditoria). A montagem do arquivo é feita no banco, com os mesmos filtros.
+ * CPF é exibido sempre mascarado por padrão; a busca por CPF é feita no servidor.
  *
  * DESEMPENHO: os filtros e a lista são pedidos AO MESMO TEMPO (antes eram em sequência) e os filtros
  * ficam em cache na aba; respostas antigas (quando se digita rápido na busca) são descartadas.
  */
 import { iniciarPagina, aviso, confirmar, informar, abrirDialogo } from './admin-shell.js';
 import { botaoIcone, soIcone, comIcone, etiquetaIcone } from './icones.js';
-import { el, limpar, debounce, formatarDataHora, formatarHoraCurta, mensagemErro, mascararCpf, cpfValido, somenteDigitos } from './utils.js';
+import { el, limpar, debounce, formatarDataHora, formatarHoraCurta, mensagemErro, mascararCpf, cpfValido, somenteDigitos, gerarCsv, baixarArquivo } from './utils.js';
 
 const $ = (id) => document.getElementById(id);
 const { sb, ehAdmin } = await iniciarPagina({ requer: 'staff', pagina: 'participantes.html' });
@@ -24,9 +33,27 @@ const TAMANHO = 50;
 const estado = { ordem: 'nome_completo', direcao: 'asc', offset: 0, total: 0, duplo: false, periodoAtual: 'unico' };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NOME_PERIODO = { manha: 'Manhã', tarde: 'Tarde', unico: 'Único' };
+// Identificação de quem é incluído manualmente (o banco grava na coluna Análise SRL/SAEB: Participante = SIM).
+const CATEGORIAS = [
+  ['participante', 'Participante'],
+  ['palestrante_painelista', 'Palestrante/Painelista'],
+  ['convidado', 'Convidado'],
+  ['estandista', 'Estandista'],
+  ['producao', 'Produção'],
+];
+// Categorias da equipe, como o banco as devolve no campo "equipe" de cada participante.
+const EQUIPE = {
+  palestrante_painelista: 'Palestrante/Painelista',
+  convidado: 'Convidado',
+  estandista: 'Estandista',
+  producao: 'Produção',
+};
 const CHAVE_FILTROS = 'forum-checkin-filtros';
 const VALIDADE_FILTROS_MS = 10 * 60 * 1000;
+const CPF_VISIVEL_MS = 5 * 60 * 1000;          // depois disso os CPFs voltam a ser ocultados
 let pedido = 0;                               // número do último pedido da lista (descarta respostas antigas)
+let itensAtuais = [];                         // participantes da página que está na tela
+const cpfs = { visivel: false, timer: null };
 
 const COLUNAS = [
   { chave: 'nome_completo', rotulo: 'Nome completo' },
@@ -70,6 +97,7 @@ function filtros() {
     p_municipio: $('f-municipio').value || null,
     p_inscricao: $('f-inscricao').value,
     p_checkin: $('f-checkin').value,
+    p_equipe: $('f-equipe').value,
   };
 }
 
@@ -108,6 +136,7 @@ async function carregar() {
   estado.total = data.total;
   estado.duplo = data.duplo === true;
   estado.periodoAtual = data.periodo_atual || 'unico';
+  itensAtuais = data.itens;
   ajustarFiltroCheckin(); atualizarFaixa();
   const corpo = $('corpo'); limpar(corpo);
   if (!data.itens.length) corpo.append(el('tr', {}, el('td', { colspan: COLUNAS.length, class: 'vazio' }, 'Nenhum participante encontrado.')));
@@ -119,6 +148,7 @@ async function carregar() {
   $('pagina').textContent = ` Página ${Math.floor(estado.offset / TAMANHO) + 1} de ${Math.max(1, Math.ceil(data.total / TAMANHO))} `;
   $('anterior').disabled = estado.offset === 0;
   $('proxima').disabled = estado.offset + TAMANHO >= data.total;
+  if (cpfs.visivel) await mostrarCpfs(meu);   // o botão "Mostrar CPF" continua valendo nas outras páginas e filtros
 }
 
 /* ------------------------- Célula de check-in ------------------------- */
@@ -164,11 +194,14 @@ function linha(p) {
   if (ehAdmin) acoes.append(el('button', { class: 'btn sec pequeno', type: 'button', onclick: () => alternarInscricao(p) }, p.inscricao_confirmada ? 'Desconfirmar' : 'Confirmar'));
   acoes.append(botaoIcone({ icone: 'historico', titulo: 'Histórico de check-ins', rotuloAria: `Histórico de check-ins de ${p.nome_completo}`, onclick: () => historico(p) }));
 
-  return el('tr', {},
-    // o NOME fica sempre inteiro (quebra de linha, nunca reticências)
+  const equipe = EQUIPE[p.equipe] ? p.equipe : null;           // só categorias conhecidas ganham destaque
+  return el('tr', { class: equipe ? 'equipe equipe-' + equipe : null },
+    // o NOME fica sempre inteiro (quebra de linha, nunca reticências); a categoria da equipe vem logo depois dele
     el('td', { class: 'nome' }, p.nome_completo,
+      equipe ? el('span', { class: 'etiqueta equipe', title: 'Equipe do evento: ' + EQUIPE[equipe] }, EQUIPE[equipe]) : null,
       p.incluido_manual ? etiquetaIcone('user-plus', 'Incluído manualmente' + (p.justificativa_inclusao ? ': ' + p.justificativa_inclusao : ''), 'incl') : null),
-    el('td', { class: 'mono' }, p.cpf_mascarado || el('span', { class: 'etiqueta ambar' }, 'sem CPF')),
+    // CPF: mascarado; o botão "Mostrar CPF" (administrador) troca o texto desta célula pelo CPF completo
+    el('td', { class: 'mono cpf', 'data-id': p.tem_cpf ? p.id : null, 'data-mascara': p.cpf_mascarado || null }, p.cpf_mascarado || el('span', { class: 'etiqueta ambar' }, 'sem CPF')),
     el('td', {}, etiquetaIcone(p.inscricao_confirmada ? 'confirmar' : 'desconf', p.inscricao_confirmada ? 'Inscrição confirmada' : 'Inscrição não confirmada', p.inscricao_confirmada ? 'verde' : 'ambar')),
     el('td', {}, celulaCheckin(p)),
     el('td', { class: 'col-acoes' }, acoes),
@@ -181,6 +214,125 @@ function linha(p) {
     el('td', {}, trunca(p.area_atuacao, 'media')),
     el('td', {}, trunca(p.analise_srl_saeb, 'curta')),
     el('td', {}, trunca(p.tipo_inscricao, 'curta')));
+}
+
+/* ------------------------------ CPF completo (administrador) ------------------------------ */
+function atualizarBotaoCpf() {
+  const b = $('cpf-toggle');
+  comIcone(b, cpfs.visivel ? 'olho-off' : 'olho', cpfs.visivel ? 'Ocultar CPF' : 'Mostrar CPF');
+  b.setAttribute('aria-pressed', cpfs.visivel ? 'true' : 'false');
+  b.title = cpfs.visivel ? 'Voltar a ocultar os CPFs' : 'Mostrar o CPF completo desta lista';
+}
+
+/** Pede ao banco os CPFs completos da página que está na tela e troca o texto das células. */
+async function mostrarCpfs(meu) {
+  const ids = itensAtuais.filter((p) => p.tem_cpf).map((p) => p.id);
+  if (!cpfs.visivel || !ids.length) return;
+  const { data, error } = await sb.rpc('fn_admin_cpfs_completos', { p_ids: ids });
+  if (meu !== undefined && meu !== pedido) return;          // a lista mudou enquanto isso: descarta
+  if (error) { ocultarCpfs(); return aviso(mensagemErro(error), 'erro'); }
+  document.querySelectorAll('#corpo td.cpf[data-id]').forEach((td) => {
+    const v = data?.[td.dataset.id];
+    if (v) { td.textContent = mascararCpf(v); td.setAttribute('data-revelado', '1'); }
+  });
+}
+
+function ocultarCpfs() {
+  clearTimeout(cpfs.timer); cpfs.visivel = false; atualizarBotaoCpf();
+  document.querySelectorAll('#corpo td.cpf[data-revelado]').forEach((td) => { td.textContent = td.dataset.mascara || ''; td.removeAttribute('data-revelado'); });
+}
+
+async function alternarCpfs() {
+  if (cpfs.visivel) return ocultarCpfs();
+  const { ok } = await confirmar({
+    titulo: 'Mostrar CPF completo',
+    mensagem: ['Os CPFs completos desta lista serão exibidos na tela (dado pessoal). Use apenas para finalidade legítima e não compartilhe a tela.',
+      'Os CPFs voltam a ser ocultados sozinhos em 5 minutos ou ao clicar em “Ocultar CPF”.'],
+    textoConfirmar: 'Mostrar CPF',
+  });
+  if (!ok) return;
+  cpfs.visivel = true; atualizarBotaoCpf();
+  cpfs.timer = setTimeout(() => { if (cpfs.visivel) { ocultarCpfs(); aviso('Os CPFs foram ocultados novamente (5 minutos).', 'info'); } }, CPF_VISIVEL_MS);
+  await mostrarCpfs(pedido);
+}
+
+/* ------------------------------ Download de CSV (administrador) ------------------------------ */
+const sim = (b) => (b ? 'Sim' : 'Não');
+const cpfCsv = (v) => (/^\d{11}$/.test(String(v ?? '')) ? mascararCpf(v) : (v ?? ''));    // com pontuação: o Excel não come os zeros
+const COLUNAS_CSV = [
+  { titulo: 'Nome completo', valor: (r) => r.nome_completo },
+  { titulo: 'CPF', valor: (r) => cpfCsv(r.cpf) },
+  { titulo: 'Matrícula funcional', valor: (r) => r.matricula_funcional ?? '' },
+  { titulo: 'Órgão/unidade', valor: (r) => r.orgao_unidade ?? '' },
+  { titulo: 'Secretaria', valor: (r) => r.secretaria ?? '' },
+  { titulo: 'Unidade gestora', valor: (r) => r.unidade_gestora ?? '' },
+  { titulo: 'Nome da unidade', valor: (r) => r.nome_unidade ?? '' },
+  { titulo: 'Município de lotação', valor: (r) => r.municipio_lotacao ?? '' },
+  { titulo: 'Cargo/função', valor: (r) => r.cargo_funcao ?? '' },
+  { titulo: 'Área de atuação', valor: (r) => r.area_atuacao ?? '' },
+  { titulo: 'Tipo de inscrição', valor: (r) => r.tipo_inscricao ?? '' },
+  { titulo: 'Análise SRL/SAEB', valor: (r) => r.analise_srl_saeb ?? '' },
+  { titulo: 'Equipe', valor: (r) => EQUIPE[r.equipe] ?? '' },
+  { titulo: 'Justificativa da inclusão manual', valor: (r) => r.justificativa_inclusao ?? '' },
+  { titulo: 'Inscrição confirmada', valor: (r) => sim(r.inscricao_confirmada) },
+  { titulo: 'Presente (ao menos 1 check-in)', valor: (r) => sim(r.presente) },
+  { titulo: 'Check-in da manhã', valor: (r) => formatarDataHora(r.checkin_manha) },
+  { titulo: 'Check-in da tarde', valor: (r) => formatarDataHora(r.checkin_tarde) },
+  { titulo: 'Check-in (período único)', valor: (r) => formatarDataHora(r.checkin_unico) },
+  { titulo: 'Origem do primeiro check-in', valor: (r) => (r.checkin_metodo === 'publico' ? 'Credenciamento público' : r.checkin_metodo === 'administrativo' ? 'Administrativo' : '') },
+];
+
+/** Descrição dos filtros que estão na tela (só o que foge do padrão "todos"). */
+function descreverFiltros() {
+  const partes = [];
+  const busca = $('f-busca').value.trim();
+  if (busca) partes.push(`busca “${busca}”`);
+  [['f-secretaria', 'Secretaria'], ['f-orgao', 'Órgão/unidade'], ['f-municipio', 'Município'], ['f-inscricao', 'Inscrição'], ['f-checkin', 'Check-in'], ['f-equipe', 'Equipe']].forEach(([id, rotulo]) => {
+    const sel = $(id);
+    if (!['', 'todos', 'todas'].includes(sel.value)) partes.push(`${rotulo}: ${sel.selectedOptions[0]?.textContent ?? sel.value}`);
+  });
+  return partes;
+}
+
+async function baixarCsv() {
+  const partes = descreverFiltros();
+  const escFiltro = el('input', { type: 'radio', name: 'escopo', id: 'esc-filtro', value: 'filtro', checked: true });
+  const escTotal = el('input', { type: 'radio', name: 'escopo', id: 'esc-total', value: 'total' });
+  const cpfChk = el('input', { type: 'checkbox', id: 'csv-cpf' });
+  const corpo = el('div', { class: 'dlg-form' },
+    el('label', { class: 'opcao-csv', for: 'esc-filtro' }, escFiltro, el('span', {},
+      el('strong', {}, 'Somente o que está na tela'),
+      el('small', {}, `${estado.total.toLocaleString('pt-BR')} participante(s). Filtros: ${partes.length ? partes.join(' · ') : 'nenhum'}.`))),
+    el('label', { class: 'opcao-csv', for: 'esc-total' }, escTotal, el('span', {},
+      el('strong', {}, 'Lista completa'),
+      el('small', {}, 'Todos os inscritos, ignorando os filtros da tela (inclui as inscrições não confirmadas).'))),
+    el('label', { class: 'opcao-csv opcao-cpf', for: 'csv-cpf' }, cpfChk, el('span', {},
+      el('strong', {}, 'Incluir o CPF completo'),
+      el('small', {}, 'Dado pessoal. Sem marcar, o CPF sai mascarado (***.456.789-**). A exportação fica registrada na auditoria.'))));
+  const r = await abrirDialogo({
+    titulo: 'Baixar CSV de participantes', corpo,
+    botoes: [{ rotulo: 'Cancelar', valor: 'nao', classe: 'sec' }, { rotulo: 'Baixar CSV', valor: 'sim' }],
+  });
+  if (r !== 'sim') return;
+  const completo = escTotal.checked;
+  const comCpf = cpfChk.checked;
+  if (comCpf) {
+    const { ok } = await confirmar({ titulo: 'Exportar CPF completo', mensagem: 'O arquivo conterá CPFs completos (dado pessoal). Use apenas para finalidade legítima e proteja o arquivo. A operação será registrada na auditoria.', textoConfirmar: 'Estou ciente, baixar', perigo: true });
+    if (!ok) return;
+  }
+  const filtrosEnviados = completo
+    ? { p_busca: null, p_secretaria: null, p_orgao: null, p_municipio: null, p_inscricao: 'todas', p_checkin: 'todos', p_equipe: 'todos' }
+    : filtros();
+  const botao = $('baixar-csv'); botao.disabled = true;
+  aviso('Gerando o arquivo…', 'info');
+  const { data, error } = await sb.rpc('fn_admin_exportar_participantes', { ...filtrosEnviados, p_cpf_completo: comCpf });
+  botao.disabled = false;
+  if (error) return aviso(mensagemErro(error), 'erro');
+  const itens = data?.itens ?? [];
+  if (!itens.length) return aviso('Nenhum participante para exportar com estes filtros.', 'alerta');
+  const carimbo = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+  baixarArquivo(gerarCsv(COLUNAS_CSV, itens), `participantes_${completo ? 'completo' : 'filtrado'}_${carimbo}.csv`, 'text/csv;charset=utf-8');
+  aviso(`${itens.length.toLocaleString('pt-BR')} participante(s) exportado(s).${data.truncado ? ' Atenção: o limite de linhas foi atingido; refine os filtros.' : ''}`, data.truncado ? 'alerta' : 'ok');
 }
 
 /* ------------------------------ Ações ------------------------------ */
@@ -263,6 +415,7 @@ async function adicionar() {
   const email = el('input', { type: 'email', maxlength: 200, autocomplete: 'off', 'aria-label': 'E-mail' });
   const cel = el('input', { type: 'tel', maxlength: 30, autocomplete: 'off', placeholder: '(71) 90000-0000', 'aria-label': 'Celular' });
   const just = el('textarea', { rows: 3, maxlength: 500, 'aria-label': 'Justificativa', placeholder: 'Por que este participante não está na base?' });
+  const selCat = el('select', { 'aria-label': 'Identificação' }, ...CATEGORIAS.map(([v, t]) => el('option', { value: v }, t)));
   const reg = el('input', { type: 'checkbox', checked: true, id: 'chk-registrar', 'aria-label': 'Registrar check-in agora' });
   const selPeriodo = el('select', { 'aria-label': 'Período do check-in' },
     el('option', { value: 'manha' }, 'Manhã'), el('option', { value: 'tarde' }, 'Tarde'));
@@ -270,13 +423,11 @@ async function adicionar() {
   const blocoPeriodo = el('div', { class: 'campo', hidden: !estado.duplo }, el('label', {}, 'Período do check-in'), selPeriodo);
   reg.addEventListener('change', () => { blocoPeriodo.hidden = !(estado.duplo && reg.checked); });
   blocoPeriodo.hidden = !(estado.duplo && reg.checked);
-
   const dupLista = el('ul'); const dupChk = el('input', { type: 'checkbox', id: 'chk-duplicidade', 'aria-label': 'Confirmo que é outra pessoa' });
   const dupBloco = el('div', { class: 'dup', hidden: true },
     el('strong', {}, 'Já existe cadastro com este e-mail ou nome:'), dupLista,
     el('p', { class: 'nota' }, 'Se for a mesma pessoa, cancele e use a busca para fazer o check-in dela.'),
     el('label', {}, dupChk, 'Confirmo que é outra pessoa'));
-
   let resultado = null;
   const ok = await formulario({
     titulo: 'Adicionar participante', textoConfirmar: 'Adicionar',
@@ -286,6 +437,8 @@ async function adicionar() {
       el('div', { class: 'campo' }, el('label', {}, 'CPF *'), cpf),
       el('div', { class: 'campo' }, el('label', {}, 'E-mail *'), email),
       el('div', { class: 'campo' }, el('label', {}, 'Celular (opcional)'), cel),
+      el('div', { class: 'campo' }, el('label', {}, 'Identificação *'), selCat,
+        el('p', { class: 'nota' }, 'Fica registrada na coluna Análise SRL/SAEB e conta como aprovado.')),
       el('div', { class: 'campo' }, el('label', {}, 'Justificativa *'), just),
       el('div', { class: 'linha-check' }, reg, el('label', { for: 'chk-registrar' }, 'Registrar o check-in agora')),
       blocoPeriodo, dupBloco,
@@ -298,12 +451,11 @@ async function adicionar() {
       const c = cel.value.trim();
       if (c && !/^[0-9+() -]{8,30}$/.test(c)) return 'Celular inválido. Use apenas números, espaços, parênteses, + e -.';
       if (just.value.trim().length < 5) return 'Informe a justificativa (mínimo de 5 caracteres).';
-
       const { data, error } = await sb.rpc('fn_admin_adicionar_participante', {
         p_nome: n, p_cpf: somenteDigitos(cpf.value), p_email: email.value.trim(), p_justificativa: just.value.trim(),
         p_celular: c || null, p_registrar_checkin: reg.checked,
         p_periodo: estado.duplo && reg.checked ? selPeriodo.value : null,
-        p_confirmar_duplicidade: dupChk.checked,
+        p_confirmar_duplicidade: dupChk.checked, p_categoria: selCat.value,
       });
       if (error) return mensagemErro(error);
       switch (data.status) {
@@ -324,7 +476,8 @@ async function adicionar() {
   });
   if (!ok || !resultado) return;
   const per = resultado.checkin && estado.duplo ? ` (${NOME_PERIODO[resultado.periodo].toLowerCase()})` : '';
-  aviso(`${resultado.nome} adicionado${resultado.checkin ? ' e check-in registrado' + per : ''}.`, 'ok');
+  const cat = CATEGORIAS.find(([v]) => v === selCat.value)?.[1] ?? '';
+  aviso(`${resultado.nome} adicionado como ${cat}${resultado.checkin ? ' e check-in registrado' + per : ''}.`, 'ok');
   carregar();
 }
 
@@ -474,14 +627,21 @@ async function carregarFiltros() {
 const recarregar = () => { estado.offset = 0; carregar(); };
 $('filtros').addEventListener('submit', (e) => e.preventDefault());
 $('f-busca').addEventListener('input', debounce(recarregar, 350));
-['f-secretaria', 'f-orgao', 'f-municipio', 'f-inscricao', 'f-checkin'].forEach((id) => $(id).addEventListener('change', recarregar));
+['f-secretaria', 'f-orgao', 'f-municipio', 'f-inscricao', 'f-checkin', 'f-equipe'].forEach((id) => $(id).addEventListener('change', recarregar));
 $('anterior').addEventListener('click', () => { estado.offset = Math.max(0, estado.offset - TAMANHO); carregar(); });
 $('proxima').addEventListener('click', () => { estado.offset += TAMANHO; carregar(); });
 $('adicionar').addEventListener('click', adicionar);
-
 soIcone($('anterior'), 'esq', 'Página anterior');
 soIcone($('proxima'), 'dir', 'Próxima página');
 comIcone($('adicionar'), 'user-plus', 'Adicionar participante');
+
+// Só o administrador vê estes dois botões (o banco também recusa quem não for administrador).
+if (ehAdmin) {
+  atualizarBotaoCpf();
+  $('cpf-toggle').hidden = false; $('cpf-toggle').addEventListener('click', alternarCpfs);
+  comIcone($('baixar-csv'), 'baixar', 'Baixar CSV');
+  $('baixar-csv').hidden = false; $('baixar-csv').addEventListener('click', baixarCsv);
+}
 
 montarCabecalho();
 $('corpo').append(el('tr', {}, el('td', { colspan: COLUNAS.length, class: 'vazio' }, 'Carregando participantes…')));

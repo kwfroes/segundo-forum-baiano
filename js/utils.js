@@ -38,8 +38,8 @@ export function cpfOculto(valor) {
 }
 
 /* ------------------------------ Senhas ------------------------------ */
-/** Gera senha temporária forte (16 caracteres, sem símbolos ambíguos) com o gerador criptográfico do navegador. */
-export function gerarSenhaTemporaria(tamanho = 16) {
+/** Gera senha temporária (8 caracteres, com maiúscula, minúscula, número e símbolo; sem caracteres ambíguos) com o gerador criptográfico do navegador. */
+export function gerarSenhaTemporaria(tamanho = 8) {
   const grupos = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnopqrstuvwxyz', '23456789', '#@%+=?'];
   const todos = grupos.join('');
   const sorteio = (max) => {                      // sem viés (rejeição)

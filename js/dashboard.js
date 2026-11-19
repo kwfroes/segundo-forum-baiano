@@ -161,7 +161,8 @@ if (ehAdmin) {
   const { data: cfg } = await sb.rpc('fn_admin_config_obter');
   if (cfg) {
     $('cfg-aberto').value = String(cfg.checkin_aberto !== false);
-    $('cfg-tempo').value = cfg.tempo_retorno_segundos ?? 8;
+    // chave ausente = padrão (8 s); chave nula = sem retorno automático (campo em branco)
+    $('cfg-tempo').value = cfg.tempo_retorno_segundos === undefined ? 8 : (cfg.tempo_retorno_segundos ?? '');
     $('cfg-duplo').value = String(cfg.checkin_duplo === true);
     $('cfg-manha').value = cfg.checkin_manha_ate || '12:00';
     $('cfg-tarde').value = cfg.checkin_tarde_a_partir || '13:30';
@@ -171,12 +172,19 @@ if (ehAdmin) {
 
   $('cfg-salvar').addEventListener('click', async () => {
     const manha = $('cfg-manha').value, tarde = $('cfg-tarde').value;
+    // retorno automático: em branco = sem retorno; 99 = sem retorno; senão de 3 a 60 s
+    const brutoTempo = $('cfg-tempo').value.trim();
+    let segundos = null;
+    if (brutoTempo !== '') {
+      segundos = Number(brutoTempo);
+      if (!Number.isInteger(segundos) || !((segundos >= 3 && segundos <= 60) || segundos === 99)) return aviso('Retorno automático: informe de 3 a 60 segundos, 99 ou deixe em branco (sem retorno automático).', 'erro');
+    }
     if ($('cfg-duplo').value === 'true') {
       if (!manha || !tarde) return aviso('Informe os dois horários do check-in duplo.', 'erro');
       if (manha > tarde) return aviso('A manhã não pode terminar depois do início da tarde.', 'erro');
     }
     const r1 = await sb.rpc('fn_admin_config_salvar', { p_chave: 'checkin_aberto', p_valor: $('cfg-aberto').value === 'true' });
-    const r2 = await sb.rpc('fn_admin_config_salvar', { p_chave: 'tempo_retorno_segundos', p_valor: Number($('cfg-tempo').value) });
+    const r2 = await sb.rpc('fn_admin_config_retorno_salvar', { p_segundos: segundos });
     const r3 = await sb.rpc('fn_admin_config_checkin_salvar', {
       p_duplo: $('cfg-duplo').value === 'true', p_manha_ate: manha || '12:00', p_tarde_de: tarde || '13:30' });
     const erro = r1.error || r2.error || r3.error;

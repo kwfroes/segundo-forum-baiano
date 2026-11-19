@@ -24,7 +24,7 @@ const PAGINAS = [
   { href: 'dashboard.html',     rotulo: 'Dashboard',     admin: false },
   { href: 'participantes.html', rotulo: 'Participantes', admin: false },
   { href: 'relatorios.html',    rotulo: 'Relatórios',    admin: true  },
-  { href: 'importar.html',      rotulo: 'Importar base', admin: true  },
+  { href: 'importar.html',      rotulo: 'Importar base', admin: true },
   { href: 'usuarios.html',      rotulo: 'Usuários',      admin: true  },
 ];
 
@@ -67,6 +67,14 @@ let pintado = null;                          // { nome, perfil } do que está na
 const linksComuns = () => PAGINAS.filter((p) => !p.admin)
   .map((p) => el('a', { href: p.href, 'aria-current': p.href === paginaAtual ? 'page' : null }, p.rotulo));
 
+/** Em telas estreitas o menu rola para o lado: deixa o item da página atual à vista (sem efeito quando o menu cabe). */
+function centralizarAtual(nav) {
+  const a = nav.querySelector('[aria-current="page"]');
+  if (!a || nav.scrollWidth <= nav.clientWidth) return;
+  const desloc = a.getBoundingClientRect().left - nav.getBoundingClientRect().left + nav.scrollLeft - (nav.clientWidth - a.offsetWidth) / 2;
+  nav.scrollLeft = Math.max(0, desloc);
+}
+
 /** Nome do evento: texto fixo, pode aparecer antes de se saber quem é o usuário. */
 function garantirMarca(topo) {
   topo.className = 'topo-admin';
@@ -96,6 +104,7 @@ function montarTopo(perfil) {
     el('div', { class: 'usuario' }, el('span', {}, el('strong', {}, perfil.nome), ' · ', perfil.perfil === 'administrador' ? 'Administrador' : 'Operador'), sair),
   );
   pintado = { nome: perfil.nome, perfil: perfil.perfil };
+  centralizarAtual(nav);
 }
 
 function aplicarPerfil(perfil) {
@@ -112,7 +121,9 @@ function aplicarPerfil(perfil) {
   if (c) montarTopo(c);
   else if (topo && sessaoLocal()) {            // só se houver sessão: quem vai para o login não vê barra
     garantirMarca(topo);
-    topo.append(el('nav', { 'aria-label': 'Principal' }, linksComuns()));
+    const navInicial = el('nav', { 'aria-label': 'Principal' }, linksComuns());
+    topo.append(navInicial);
+    centralizarAtual(navInicial);
   }
 }
 
