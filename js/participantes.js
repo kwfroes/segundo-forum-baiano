@@ -27,7 +27,7 @@ import { botaoIcone, soIcone, comIcone, etiquetaIcone } from './icones.js';
 import { el, limpar, debounce, formatarDataHora, formatarHoraCurta, mensagemErro, mascararCpf, cpfValido, somenteDigitos, gerarCsv, baixarArquivo } from './utils.js';
 
 const $ = (id) => document.getElementById(id);
-const { sb, ehAdmin } = await iniciarPagina({ requer: 'staff', pagina: 'participantes.html' });
+const { sb, ehAdmin, ehMaster } = await iniciarPagina({ requer: 'staff', pagina: 'participantes.html' });
 
 const TAMANHO = 50;
 const estado = { ordem: 'nome_completo', direcao: 'asc', offset: 0, total: 0, duplo: false, periodoAtual: 'unico' };
@@ -193,6 +193,20 @@ function linha(p) {
   acoes.append(botaoIcone({ icone: 'editar', titulo: 'Editar dados', rotuloAria: `Editar dados de ${p.nome_completo}`, onclick: () => editar(p) }));
   if (ehAdmin) acoes.append(el('button', { class: 'btn sec pequeno', type: 'button', onclick: () => alternarInscricao(p) }, p.inscricao_confirmada ? 'Desconfirmar' : 'Confirmar'));
   acoes.append(botaoIcone({ icone: 'historico', titulo: 'Histórico de check-ins', rotuloAria: `Histórico de check-ins de ${p.nome_completo}`, onclick: () => historico(p) }));
+  if (ehMaster) {
+    const temCheckin = Boolean(p.presente || p.checkin_manha || p.checkin_tarde || p.checkin_unico);
+    const btnExcluir = botaoIcone({
+      icone: 'lixeira',
+      titulo: 'Excluir participante',
+      rotuloAria: `Excluir ${p.nome_completo}`,
+      classe: 'perigo',
+      desabilitado: temCheckin,
+      onclick: () => excluir(p),
+    });
+    acoes.append(temCheckin
+      ? el('span', { class: 'bloqueado', title: 'Participantes com check-in registrado não podem ser excluídos.' }, btnExcluir)
+      : btnExcluir);
+  }
 
   const equipe = EQUIPE[p.equipe] ? p.equipe : null;           // só categorias conhecidas ganham destaque
   return el('tr', { class: equipe ? 'equipe equipe-' + equipe : null },
@@ -373,6 +387,38 @@ async function alternarInscricao(p) {
   const { error } = await sb.rpc('fn_admin_definir_inscricao', { p_participante_id: p.id, p_confirmada: novo, p_motivo: motivo || null });
   if (error) return aviso(mensagemErro(error), 'erro');
   aviso('Inscrição atualizada.', 'ok'); carregar();
+}
+
+async function excluir(p) {
+  const { ok, motivo } = await confirmar({
+    titulo: 'Excluir participante',
+    mensagem: [
+      `Excluir ${p.nome_completo} (${p.cpf_mascarado || 'sem CPF'}) da lista ativa?`,
+      'O cadastro sairá da lista e dos indicadores do dashboard. Todos os dados ficam salvos em backup no banco (lixeira) e a operação é registrada nos logs.',
+    ],
+    pedirMotivo: true,
+    motivoObrigatorio: true,
+    textoConfirmar: 'Excluir participante',
+    perigo: true,
+  });
+  if (!ok) return;
+
+  const { data, error } = await sb.rpc('fn_admin_excluir_participante', {
+    p_participante_id: p.id,
+    p_motivo: motivo,
+  });
+  if (error) return aviso(mensagemErro(error), 'erro');
+  if (data?.status === 'possui_checkin') return aviso(data.mensagem, 'alerta');
+  if (data?.status === 'nao_encontrado') return aviso('Participante não encontrado. Atualize a página.', 'alerta');
+  if (data?.status === 'dados_invalidos') return aviso(data.mensagem || 'Informe o motivo.', 'erro');
+  if (data?.status !== 'sucesso') return aviso('Não foi possível excluir o participante.', 'erro');
+
+  if (itensAtuais.length === 1 && estado.offset > 0) {
+    estado.offset = Math.max(0, estado.offset - TAMANHO);
+  }
+  aviso(`Participante ${data.nome} excluído e arquivado na lixeira.`, 'ok');
+  carregarFiltros().catch(() => {});
+  carregar();
 }
 
 async function historico(p) {

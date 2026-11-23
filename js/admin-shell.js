@@ -186,7 +186,7 @@ export async function iniciarPagina({ requer = 'staff' } = {}) {
 
   // sessão expirada/encerrada em outra aba
   sb.auth.onAuthStateChange((evento) => { if (evento === 'SIGNED_OUT') { limparCachePerfil(); location.replace('index.html'); } });
-  return { sb, perfil, ehAdmin: perfil.perfil === 'administrador' };
+  return { sb, perfil, ehAdmin: perfil.perfil === 'administrador', ehMaster: perfil.perfil === 'administrador' && ehMaster(session.user), };
 }
 
 /** Confirma o perfil no banco depois de liberar a página com o cache. Só age se a resposta for conclusiva. */

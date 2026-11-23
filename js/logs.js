@@ -5,8 +5,8 @@
  *  • Tudo é desenhado com textContent (nunca innerHTML): os detalhes do log podem conter texto digitado por usuários.
  *  • Ações desconhecidas aparecem com o nome "legível" gerado a partir do código, então logs novos nunca ficam em branco.
  */
-import { iniciarPagina, aviso, informar } from './admin-shell.js';
-import { botaoIcone, soIcone } from './icones.js';
+import { iniciarPagina, aviso, confirmar, informar, abrirDialogo } from './admin-shell.js';
+import { icone, botaoIcone, soIcone } from './icones.js';
 import { el, limpar, debounce, formatarDataHora, mensagemErro } from './utils.js';
 
 const $ = (id) => document.getElementById(id);
@@ -29,6 +29,8 @@ const ACOES = {
   usuario_criado: ['Usuário criado', 'verde'],
   usuario_alterado: ['Usuário alterado', 'cinza'],
   senha_redefinida: ['Senha redefinida', 'ambar'],
+  participante_excluido: ['Participante excluído', 'vermelha'],
+  participante_restaurado: ['Participante restaurado', 'verde'],
 };
 const humaniza = (codigo) => { const t = String(codigo ?? '').replace(/_/g, ' ').trim(); return t ? t[0].toUpperCase() + t.slice(1) : '—'; };
 const rotuloAcao = (codigo) => (ACOES[codigo] ? ACOES[codigo][0] : humaniza(codigo));
@@ -38,7 +40,7 @@ const CHAVES = {
   usuario: 'Usuário (alvo)', quantidade: 'Quantidade', perfil: 'Perfil', resultado: 'Resultado', cpf_completo: 'CPF completo',
   com_filtros: 'Com filtros', justificativa: 'Justificativa', identificacao: 'Identificação', checkin: 'Check-in', periodo: 'Período',
   duplicidade_confirmada: 'Duplicidade confirmada', chave: 'Configuração', operacao: 'Operação', nome: 'Nome', campos: 'Campos',
-  de: 'De', para: 'Para', cpf: 'CPF', motivo: 'Motivo', arquivo: 'Arquivo',
+  de: 'De', para: 'Para', cpf: 'CPF', motivo: 'Motivo', arquivo: 'Arquivo', lixeira_id: 'Registro na lixeira',
 };
 const rotuloChave = (k) => CHAVES[k] ?? humaniza(k);
 
@@ -127,7 +129,43 @@ async function carregar() {
 }
 
 /* ----------------------------- Detalhes ----------------------------- */
-function detalhes(i) {
+async function restaurarParticipante(lixeiraId, nome) {
+  const { ok, motivo } = await confirmar({
+    titulo: 'Restaurar participante',
+    mensagem: `Trazer ${nome || 'este participante'} de volta para a lista ativa com todos os dados originais?`,
+    pedirMotivo: true,
+    motivoObrigatorio: false,
+    textoConfirmar: 'Restaurar',
+  });
+  if (!ok) return;
+
+  const { data, error } = await sb.rpc('fn_admin_restaurar_participante', {
+    p_lixeira_id: lixeiraId,
+    p_motivo: motivo || null,
+  });
+  if (error) return aviso(mensagemErro(error), 'erro');
+
+  switch (data?.status) {
+    case 'sucesso':
+      aviso(`Participante ${data.nome} restaurado para a lista ativa.`, 'ok');
+      carregar();
+      break;
+    case 'ja_restaurado':
+      aviso(`Este participante já foi restaurado em ${formatarDataHora(data.restaurado_em)}.`, 'info');
+      break;
+    case 'cpf_existente':
+    case 'conflito_id':
+      aviso(data.mensagem, 'alerta');
+      break;
+    case 'nao_encontrado':
+      aviso('Registro não encontrado na lixeira.', 'erro');
+      break;
+    default:
+      aviso('Não foi possível restaurar o participante.', 'erro');
+  }
+}
+
+async function detalhes(i) {
   const par = (rot, txt) => [el('dt', {}, rot), el('dd', {}, txt)];
   const geral = [
     ...par('Data e hora', formatarDataHora(i.data_hora)),
@@ -138,14 +176,24 @@ function detalhes(i) {
     ...par('Código do log', i.id),
   ];
   const linhas = linhasDetalhe(i, true);
-  informar({
+  const corpo = el('div', { class: 'log-detalhe' },
+    el('dl', {}, ...geral),
+    el('h3', {}, 'O que foi registrado'),
+    linhas.length ? el('dl', {}, ...linhas.flatMap(([k, v]) => par(k, v))) : el('p', { class: 'nota' }, 'Sem detalhes adicionais.'));
+
+  const lixeiraId = i.acao === 'participante_excluido' ? i.detalhes?.lixeira_id : null;
+  if (!lixeiraId) return informar({ titulo: 'Detalhes do registro', largo: true, corpo });
+
+  const r = await abrirDialogo({
     titulo: 'Detalhes do registro',
     largo: true,
-    corpo: el('div', { class: 'log-detalhe' },
-      el('dl', {}, ...geral),
-      el('h3', {}, 'O que foi registrado'),
-      linhas.length ? el('dl', {}, ...linhas.flatMap(([k, v]) => par(k, v))) : el('p', { class: 'nota' }, 'Sem detalhes adicionais.')),
+    corpo,
+    botoes: [
+      { rotulo: 'Fechar', valor: 'ok', classe: 'sec' },
+      { rotulo: [icone('atualizar', 16), 'Restaurar participante'], valor: 'restaurar', classe: 'verde' },
+    ],
   });
+  if (r === 'restaurar') await restaurarParticipante(lixeiraId, i.detalhes?.nome);
 }
 
 /* ----------------------------- Filtros e início ----------------------------- */
